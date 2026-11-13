@@ -27,6 +27,7 @@ from mluvka import (
     output,
     overlay,
     pamet,
+    sledovani,
     text,
     tray,
     trenink,
@@ -103,6 +104,7 @@ class MluvkaApp:
         self._ai = llm.ClaudeAI(data)
         self._recorder = audio.Recorder()
         self._streamer: asr.StreamingTranscriber | None = None
+        self._sledovac = sledovani.Sledovac()
 
         self._work_queue: queue.Queue[tuple[str, Any] | None] = queue.Queue()
         self._hook = hotkey.GlobalHotkeyHook(
@@ -212,6 +214,7 @@ class MluvkaApp:
             self._work_queue.put(("paste_last", False))
 
     def _start_recording(self, mode: str) -> None:
+        self._sledovac.stop()
         cfg = self._refresh_config()
         with self._state_lock:
             if self._recording or self._stopping:
@@ -505,6 +508,43 @@ class MluvkaApp:
                 self._reloading_model = False
             self._maybe_schedule_model_reload()
 
+    def _format_learned_toast(self, dvojice: list[list[str]]) -> str:
+        shown = ", ".join(f"{z} → {na}" for z, na in dvojice[:2])
+        extra = len(dvojice) - 2
+        if extra > 0:
+            return f"Naučeno: {shown} +{extra}"
+        return f"Naučeno: {shown}"
+
+    def _on_learned(
+        self,
+        entry_id: str,
+        upraveny_usek: str,
+        dvojice: list[list[str]],
+    ) -> None:
+        with self._state_lock:
+            if self._stopping:
+                return
+        if not entry_id or not dvojice:
+            return
+        res = history.update_entry_with_previous(entry_id, upraveny_usek, data=self._data)
+        if res is None:
+            return
+        entry, prev_text = res
+        opraveno_text = str(entry.get("opraveno", ""))
+        if prev_text.strip() != opraveno_text.strip():
+            pamet.add(
+                str(entry.get("id") or entry_id),
+                prev_text,
+                opraveno_text,
+                zmeny=dvojice,
+                data=self._data,
+            )
+        try:
+            self._cfg_store.add_opravy(dvojice)
+            self._toast_if_idle(self._format_learned_toast(dvojice), kind="info")
+        except config.ConfigInvalidError:
+            log.warning("config.json má neplatný JSON; naučené opravy neuloženy do slovníku.")
+
     def _handle_paste_last(self, *, from_tray: bool) -> None:
         txt = self._last_transcript
         if not txt:
@@ -651,6 +691,7 @@ class MluvkaApp:
             else:
                 self._toast_if_idle("Vložení se nepovedlo, text je ve schránce", kind="error")
 
+            entry_id = ""
             if bool(cfg.get("historie", True)):
                 entry_id = uuid.uuid4().hex
                 zvuk = ""
@@ -676,6 +717,22 @@ class MluvkaApp:
 
             # Aktuální nastavení, ne snímek z konce nahrávání: vypnutý kanál nesmí poslat ani diktát ve frontě.
             live = self._refresh_config(refresh_menu=False)
+            with self._state_lock:
+                can_watch = (not self._stopping) and (not self._recording)
+            if (
+                ok
+                and entry_id
+                and can_watch
+                and bool(cfg.get("uceni_z_oprav", True))
+                and bool(live.get("uceni_z_oprav", True))
+            ):
+                self._sledovac.start(
+                    processed,
+                    entry_id,
+                    lambda upraveny_usek, dvojice, eid=entry_id: self._on_learned(
+                        eid, upraveny_usek, dvojice
+                    ),
+                )
             webhook_url = str(live.get("kanal_webhook", "") or "").strip()
             if bool(live.get("kanal_zapnuto", True)) and channel.is_valid_webhook_url(webhook_url):
                 channel.send_async(
@@ -806,6 +863,7 @@ class MluvkaApp:
             if streamer is not None:
                 streamer.cancel(wait=False)
             self._hook.stop()
+            self._sledovac.stop()
             self._recorder.cancel()
             self._whisper.close()
             if streamer is not None:

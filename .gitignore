@@ -5,3 +5,6 @@ __pycache__/
 *.wav
 *.zip
 node_modules/
+docs/media/raw/
+.ai/
+.impeccable/

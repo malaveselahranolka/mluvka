@@ -90,6 +90,7 @@ def add(
     puvodni: str,
     opraveno: str,
     *,
+    zmeny: list[list[str]] | list[tuple[str, str]] | None = None,
     cas: datetime | str | None = None,
     data: Path | None = None,
 ) -> dict[str, Any]:
@@ -103,13 +104,23 @@ def add(
 
     puv_str = str(puvodni or "")
     opr_str = str(opraveno or "")
-    zmeny = extract_changes(puv_str, opr_str)
+    if zmeny is not None:
+        clean_zmeny = [
+            [str(p[0]).strip(), str(p[1]).strip()]
+            for p in zmeny
+            if isinstance(p, (list, tuple))
+            and len(p) == 2
+            and str(p[0]).strip()
+            and str(p[1]).strip()
+        ]
+    else:
+        clean_zmeny = extract_changes(puv_str, opr_str)
     record: dict[str, Any] = {
         "id": str(entry_id or ""),
         "cas": ts,
         "puvodni": puv_str,
         "opraveno": opr_str,
-        "zmeny": zmeny,
+        "zmeny": clean_zmeny,
     }
     path = config.pamet_jsonl_path(data)
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mluvka: soukromé diktování češtiny pro Windows</title>
+<meta name="description" content="Podrž klávesu, mluv a pusť. Mluvka přepíše češtinu přímo v tvém počítači a vloží text tam, kde máš kurzor. Zdarma a open source.">
+<link rel="canonical" href="https://malaveselahranolka.github.io/mluvka/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#F7F5F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1420" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="cs_CZ">
+<meta property="og:title" content="Mluvka: soukromé diktování češtiny pro Windows">
+<meta property="og:description" content="Podrž klávesu, mluv a pusť. Mluvka přepíše češtinu přímo v tvém počítači a vloží text tam, kde máš kurzor.">
+<meta property="og:url" content="https://malaveselahranolka.github.io/mluvka/">
+<meta property="og:image" content="https://malaveselahranolka.github.io/mluvka/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap&subset=latin,latin-ext" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#hero">Přeskočit na obsah</a>
+
+<header class="bar" id="bar">
+  <div class="bar-in">
+    <a class="brand" href="#hero">
+      <svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" class="mark-bg"/><g fill="#FFB37A"><rect x="11" y="23" width="10" height="18" rx="5"/><rect x="27" y="15" width="10" height="34" rx="5"/><rect x="43" y="19" width="10" height="26" rx="5"/></g></svg>
+      <span>Mluvka</span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Hlavní">
+      <a href="#rychlost">Rychlost</a>
+      <a href="#vyzkousej">Vyzkoušej</a>
+      <a href="#aplikace">Aplikace</a>
+      <a href="#soukromi">Soukromí</a>
+      <a href="#otazky">Otázky</a>
+    </nav>
+    <div class="bar-end">
+      <a class="icon-link" href="https://github.com/malaveselahranolka/mluvka" aria-label="Zdrojový kód na GitHubu">
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48l-.01-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85l-.01 2.75c0 .26.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+      </a>
+      <a class="btn btn-prim btn-sm" href="#instalace">Nainstalovat</a>
+      <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="nav">Menu</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- 1. HERO -->
+<section class="hero" id="hero">
+  <div class="snips" aria-hidden="true">
+    <span class="snip s1">tak jo, pošlu ti to do pátku</span>
+    <span class="snip s2">mrkni ještě na ten odstavec</span>
+    <span class="snip s3">schůzka je ve středu v deset</span>
+    <span class="snip s4">díky, ozvu se odpoledne</span>
+  </div>
+  <div class="wrap hero-in">
+    <h1 class="rv">Nepiš.<br><span class="hl">Mluv.</span></h1>
+    <p class="lead rv">Podrž klávesu, mluv a pusť. Mluvka přepíše češtinu přímo v tvém počítači a vloží text tam, kde máš kurzor.</p>
+    <div class="cta rv">
+      <a class="btn btn-prim btn-lg" href="#instalace">Nainstalovat zdarma</a>
+      <a class="btn btn-ghost btn-lg" href="#vyzkousej">Vyzkoušet rovnou tady</a>
+    </div>
+    <p class="avail rv">Zdarma a open source. Windows 10 a 11.</p>
+    <div class="wavepill rv" aria-hidden="true">
+      <span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      Mluvka poslouchá
+    </div>
+  </div>
+</section>
+
+<!-- 2. PÁS APLIKACÍ -->
+<section class="plate plate-dark tight" id="kam">
+  <div class="wrap">
+    <p class="plate-lead">Píše tam, kde zrovna jsi</p>
+  </div>
+  <div class="ticker" aria-hidden="true">
+    <div class="track" id="track">
+      <span>Outlook</span><span>Word</span><span>Slack</span><span>Claude</span><span>Visual Studio Code</span><span>Notion</span><span>Teams</span><span>Gmail</span><span>Excel</span><span>Chrome</span><span>WhatsApp</span><span>Poznámkový blok</span>
+    </div>
+  </div>
+  <p class="sr-only">Mluvka píše do Outlooku, Wordu, Slacku, Claude, Visual Studio Code, Notionu, Teams, Gmailu, Excelu, Chromu, WhatsAppu i Poznámkového bloku.</p>
+</section>
+
+<!-- 3. SIGNATURE 1: RYCHLOST -->
+<section class="plate plate-accent" id="rychlost">
+  <div class="pin-outer" id="speed-outer">
+    <div class="pin-inner">
+      <div class="wrap">
+        <h2 class="pin-title">Mluvíš <span class="hl">třikrát rychleji</span>,<br>než píšeš</h2>
+        <div class="race" id="race">
+          <div class="card-slow" id="card-slow">
+            <p class="card-k">Psaní na klávesnici</p>
+            <p class="card-v">40 <span>slov za minutu</span></p>
+            <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
+          </div>
+          <div class="card-fast" id="card-fast">
+            <video id="race-video" poster="media/mluvka-video-poster.webp" width="1280" height="720" muted loop playsinline preload="metadata" aria-hidden="true">
+              <source src="media/mluvka-video.mp4" type="video/mp4">
+            </video>
+            <div class="card-fast-top">
+              <p class="card-k">Mluvení</p>
+              <p class="card-v">150 <span>slov za minutu</span></p>
+            </div>
+            <p class="race-text" id="race-text" aria-hidden="true"></p>
+          </div>
+        </div>
+        <p class="pin-note" id="speed-note">Běžné tempo psaní a běžné tempo řeči. Minutu diktátu má Mluvka přepsanou a vloženou za 2,6 sekundy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. SIGNATURE 2: VYZKOUŠEJ -->
+<section class="sec" id="vyzkousej">
+  <div class="wrap">
+    <h2>Zkus si to tady<br>a pak doopravdy</h2>
+    <p class="sub">Podrž tlačítko a pusť. Na počítači funguje i pravý Ctrl na klávesnici, úplně jako v aplikaci.</p>
+    <div class="demo">
+      <div class="mail" id="mail">
+        <div class="mail-top">Nový e-mail</div>
+        <div class="mail-row"><span class="mail-k">Komu:</span> tým@firma.cz</div>
+        <div class="mail-row"><span class="mail-k">Předmět:</span> Shrnutí porady</div>
+        <div class="mail-body" id="mail-body" aria-live="polite"><span id="mail-text"></span><span class="caret" aria-hidden="true"></span></div>
+        <div class="pill" id="pill" hidden>
+          <span class="bars" id="rec-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="pill-txt" id="pill-txt">0:00</span>
+        </div>
+      </div>
+      <button class="key" id="key">
+        <span class="key-main">Pravý Ctrl</span>
+        <span class="key-sub">podrž a mluv</span>
+      </button>
+    </div>
+    <dl class="keys">
+      <div><dt><kbd>Dvakrát ťukni na pravý Ctrl</kbd></dt><dd>Volné ruce, nahrává se bez držení</dd></div>
+      <div><dt><kbd>Esc</kbd></dt><dd>Zruší diktát, nic se nevloží</dd></div>
+      <div><dt><kbd>Shift + pravý Ctrl</kbd></dt><dd>Příkaz nad označeným textem, třeba „přepiš to formálněji“</dd></div>
+      <div><dt><kbd>Alt + Shift + Z</kbd></dt><dd>Vloží poslední přepis znovu</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- 5. LEPIVÝ SEZNAM VLASTNOSTÍ -->
+<section class="sec" id="umi">
+  <div class="wrap">
+    <h2>Mluvka ti rozumí,<br>ne jen slyší</h2>
+    <p class="sub">Vycpávky, přeřeknutí a odrážky uhladí napojení na Claude. Zapneš ho vlastním API klíčem a platíš přímo Anthropicu. Bez klíče běží přepis i slovník dál, jen bez uhlazení.</p>
+    <div class="sticky-wrap">
+      <ol class="feat-list" id="feat-list">
+        <li><button data-f="0" aria-current="true"><span>Mluv, jak ti zobák narostl</span></button></li>
+        <li><button data-f="1">Z výčtu udělá odrážky</button></li>
+        <li><button data-f="2">Naučí se tvoje slova</button></li>
+      </ol>
+      <div class="feat-stage" id="feat-stage">
+        <figure class="feat-card" data-f="0">
+          <div class="fc-body">
+            <p class="fc-raw">„Takže ehm, v pondělí, teda ne, v úterý pošlu ten návrh, no, a pak se ozvu.“</p>
+            <p class="fc-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4v13.2l-5.6-5.6-1.4 1.4 8 8 8-8-1.4-1.4-5.6 5.6V4z"/></svg>
+            </p>
+            <p class="fc-out">V úterý pošlu ten návrh a pak se ozvu.</p>
+          </div>
+          <figcaption>Výplňová slova, pauzy i odvolané věty jdou pryč. Zůstane to, cos chtěl říct.</figcaption>
+        </figure>
+        <figure class="feat-card" data-f="1" hidden>
+          <div class="fc-body">
+            <p class="fc-raw">„Za prvé dodělat formulář, za druhé napsat testy, za třetí nasadit.“</p>
+            <p class="fc-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4v13.2l-5.6-5.6-1.4 1.4 8 8 8-8-1.4-1.4-5.6 5.6V4z"/></svg>
+            </p>
+            <ul class="fc-out fc-bullets">
+              <li>Dodělat formulář</li>
+              <li>Napsat testy</li>
+              <li>Nasadit</li>
+            </ul>
+          </div>
+          <figcaption>Mluvený výčet se sám srovná do odrážek. Interpunkci a velká písmena doplní za tebe.</figcaption>
+        </figure>
+        <figure class="feat-card" data-f="2" hidden>
+          <div class="fc-body">
+            <div class="fix" id="fix">
+              <div class="toast" id="fix-toast" hidden>Naučeno: klódovi → Claudovi</div>
+              <p class="fix-line">Pošli to <span class="fix-word" id="fix-word">klódovi</span> do pátku.</p>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="fix-replay">Přehrát znovu</button>
+          </div>
+          <figcaption>Opravíš slovo přímo v e-mailu nebo v Claude a Mluvka si opravu uloží. Do aplikace nic nepřepisuješ.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. APLIKACE -->
+<section class="sec" id="aplikace">
+  <div class="wrap">
+    <h2>Celá aplikace<br>v jednom okně</h2>
+    <p class="sub">Historie diktátů, vlastní slovník, zkratky a trénink na tvůj hlas. Světlý i tmavý vzhled podle Windows.</p>
+
+    <div class="tabs" role="tablist" aria-label="Stránky aplikace">
+      <button role="tab" id="t-prehled" aria-selected="true" aria-controls="panel-app" data-page="prehled">Přehled</button>
+      <button role="tab" id="t-historie" aria-selected="false" aria-controls="panel-app" data-page="historie" tabindex="-1">Historie</button>
+      <button role="tab" id="t-slovnik" aria-selected="false" aria-controls="panel-app" data-page="slovnik" tabindex="-1">Slovník</button>
+      <button role="tab" id="t-trenink" aria-selected="false" aria-controls="panel-app" data-page="trenink" tabindex="-1">Trénink</button>
+      <button role="tab" id="t-soukromi" aria-selected="false" aria-controls="panel-app" data-page="soukromi" tabindex="-1">Soukromí</button>
+    </div>
+
+    <div class="devices" id="panel-app" role="tabpanel" aria-labelledby="t-prehled">
+      <figure class="monitor">
+        <div class="screen"><img id="shot-dark" src="shots/prehled-dark.webp" width="1280" height="800" alt="Okno Mluvky v tmavém vzhledu" loading="lazy" decoding="async"></div>
+        <div class="stand" aria-hidden="true"></div>
+        <div class="foot" aria-hidden="true"></div>
+      </figure>
+      <figure class="laptop">
+        <div class="lid"><div class="cam" aria-hidden="true"></div><div class="screen"><img id="shot-light" src="shots/prehled-light.webp" width="1280" height="800" alt="Okno Mluvky ve světlém vzhledu" loading="lazy" decoding="async"></div></div>
+        <div class="base" aria-hidden="true"><span></span></div>
+      </figure>
+    </div>
+
+    <div class="mode-switch" id="mode-switch" role="group" aria-label="Vzhled okna">
+      <button type="button" data-mode="light" aria-pressed="true">Světlý</button>
+      <button type="button" data-mode="dark" aria-pressed="false">Tmavý</button>
+    </div>
+
+    <p class="caption" id="app-caption">Kolik jsi tento týden nadiktoval a kolik času to ušetřilo.</p>
+  </div>
+</section>
+
+<!-- 7. SIGNATURE 3: SOUKROMÍ -->
+<section class="plate plate-dark" id="soukromi">
+  <div class="pin-outer" id="priv-outer">
+    <div class="pin-inner">
+      <div class="wrap">
+        <h2 class="pin-title">Zvuk nikdy neopustí<br><span class="hl">tvůj počítač</span></h2>
+        <div class="priv" id="priv">
+          <div class="cloud" id="cloud" aria-hidden="true">
+            <svg viewBox="0 0 256 256" width="26" height="26"><path fill="currentColor" d="M160 40a88.09 88.09 0 0 0-78.71 48.68A64 64 0 1 0 72 216h88a88 88 0 0 0 0-176Zm0 160H72a48 48 0 0 1 0-96c1.1 0 2.2 0 3.29.11A88 88 0 0 0 72 128a8 8 0 0 0 16 0 72 72 0 1 1 72 72Z"/></svg>
+            Cizí server
+          </div>
+
+          <p class="wall-label">hranice tvého počítače</p>
+          <div class="wall" id="wall" aria-hidden="true"></div>
+
+          <div class="pc-box">
+            <div class="flyer" id="flyer" aria-hidden="true">
+              <span class="fly-audio" id="fly-audio"><i></i><i></i><i></i><i></i><i></i> tvůj hlas</span>
+              <span class="fly-text" id="fly-text">Shrnutí porady doplním do zítřka.</span>
+            </div>
+            <p class="pc-label">Tvůj počítač</p>
+            <div class="pc-row">
+              <span class="node" id="node-mic"><svg viewBox="0 0 256 256" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M128 176a48.05 48.05 0 0 0 48-48V64a48 48 0 0 0-96 0v64a48.05 48.05 0 0 0 48 48ZM96 64a32 32 0 0 1 64 0v64a32 32 0 0 1-64 0Zm40 143.6V232a8 8 0 0 1-16 0v-24.4A80.11 80.11 0 0 1 48 128a8 8 0 0 1 16 0 64 64 0 0 0 128 0 8 8 0 0 1 16 0 80.11 80.11 0 0 1-72 79.6Z"/></svg>Mikrofon</span>
+              <span class="node" id="node-gpu"><svg viewBox="0 0 256 256" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M208 72h-24V48a16 16 0 0 0-16-16H88a16 16 0 0 0-16 16v24H48a16 16 0 0 0-16 16v80a16 16 0 0 0 16 16h24v24a16 16 0 0 0 16 16h80a16 16 0 0 0 16-16v-24h24a16 16 0 0 0 16-16V88a16 16 0 0 0-16-16ZM88 48h80v24H88Zm80 160H88v-24h80Zm40-40H48V88h160v80Z"/></svg>Přepis na tvé grafice</span>
+              <span class="node" id="node-txt"><svg viewBox="0 0 256 256" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M152 32h-16a40 40 0 0 0-40 40v48H72a8 8 0 0 0 0 16h24v48a40 40 0 0 0 40 40h16a8 8 0 0 0 0-16h-16a24 24 0 0 1-24-24v-48h24a8 8 0 0 0 0-16h-24V72a24 24 0 0 1 24-24h16a8 8 0 0 0 0-16Z"/></svg>Text v aplikaci</span>
+            </div>
+          </div>
+        </div>
+        <p class="pin-note" id="priv-note">Zvuk se zpracuje na tvé grafice a dál nejde. Ven putuje jen text, a jen když máš nastavený API klíč ke Claude.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. PŘESNOST -->
+<section class="sec" id="presnost">
+  <div class="wrap">
+    <h2>Změřeno,<br>ne odhadnuto</h2>
+    <div class="stats">
+      <div><strong>6,0 %</strong><span>chybných slov na testu FLEURS (čtená čeština)</span></div>
+      <div><strong>7,2 %</strong><span>chybných slov na 500 větách z Common Voice</span></div>
+      <div><strong>2,6 s</strong><span>od puštění klávesy po vložení minutového diktátu, včetně úpravy přes Claude</span></div>
+      <div><strong>0 B</strong><span>zvuku odeslaného na internet</span></div>
+    </div>
+    <p class="note">Měřeno 13. 11. 2026 na notebooku s grafikou RTX 4050, model CzechSpeech q5_0, beam 5. Postup měření je <a class="link" href="https://github.com/malaveselahranolka/mluvka#přesnost-a-rychlost">v repozitáři</a>.</p>
+  </div>
+</section>
+
+<!-- 9. DAROVÁNÍ -->
+<section class="plate plate-accent tight" id="darovani">
+  <div class="wrap split">
+    <div class="loop-wrap">
+      <video id="loop" poster="media/svestka-poster.webp" width="1280" height="720" muted loop playsinline preload="none" aria-label="Švestka, která se promění ve znak Mluvky">
+        <source src="media/svestka.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="split-text">
+      <p class="tag">Připravujeme</p>
+      <h2>Model, který se učí<br>od lidí, co ho používají</h2>
+      <p>Chystáme dobrovolné darování ověřených diktátů. Z nich budeme model pravidelně dolaďovat a nová verze se všem stáhne sama. Bez jména a bez e-mailu, se souhlasem, který jde kdykoli odvolat.</p>
+      <p><a class="link" href="https://github.com/malaveselahranolka/mluvka">Sledovat vývoj na GitHubu</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 10. OTÁZKY -->
+<section class="sec" id="otazky">
+  <div class="wrap">
+    <h2>Časté otázky</h2>
+    <div class="faq">
+      <details open>
+        <summary>Funguje Mluvka i bez internetu?</summary>
+        <p>Přepis ano, ten běží celý v tvém počítači. Bez internetu se jen nespustí volitelné uhlazení textu přes Claude.</p>
+      </details>
+      <details>
+        <summary>Potřebuju grafiku od NVIDIE?</summary>
+        <p>Ne, ale hodně pomůže. S NVIDIÍ je minuta diktátu přepsaná zhruba za tři sekundy. Bez ní to jede na procesoru a trvá to déle.</p>
+      </details>
+      <details>
+        <summary>Kolik to stojí?</summary>
+        <p>Nic. Mluvka je open source pod licencí MIT a přepisový model je zdarma pro nekomerční použití. Platíš jen za úpravy textu přes Claude, a to přímo Anthropicu podle svého klíče. Bez klíče Mluvka diktuje dál, jen text neuhlazuje.</p>
+      </details>
+      <details>
+        <summary>Posílá Mluvka něco ven?</summary>
+        <p>Zvuk nikdy. Text jen ve dvou případech: při úpravách přes Claude, nebo když si nastavíš vlastní kanál (webhook). Úpravy přes Claude se zapnou, jakmile má Mluvka API klíč, ať už ten z Nastavení, nebo proměnnou prostředí <code>ANTHROPIC_API_KEY</code>. Bez klíče neodchází nic. Kanál je bez vyplněné adresy neaktivní a síťová pojistka nepustí Mluvku nikam jinam.</p>
+      </details>
+      <details>
+        <summary>Umí i jiné jazyky?</summary>
+        <p>Ne. Mluvka je dělaná na češtinu a používá model natrénovaný jen na ní. Proto je v češtině přesnější než obecné vícejazyčné modely.</p>
+      </details>
+      <details>
+        <summary>Co když přepíše slovo špatně?</summary>
+        <p>Oprav ho rovnou tam, kde píšeš. Mluvka si toho všimne a příště to napíše správně. Jména a odborné výrazy můžeš taky přidat do Slovníku.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- 11. INSTALACE -->
+<section class="sec" id="instalace">
+  <div class="wrap">
+    <h2>Nainstaluj to<br>jedním příkazem</h2>
+    <ul class="req">
+      <li><span class="fi" aria-hidden="true"><svg viewBox="0 0 256 256" width="18" height="18"><path fill="currentColor" d="m104 44.3-64 9.1V120h64ZM120 42v78h96V28.3ZM40 136v66.6l64 9.1V136Zm80 0v78l96 13.7V136Z"/></svg></span>Windows 10 nebo 11, 64bit</li>
+      <li><span class="fi" aria-hidden="true"><svg viewBox="0 0 256 256" width="18" height="18"><path fill="currentColor" d="M208 72h-24V48a16 16 0 0 0-16-16H88a16 16 0 0 0-16 16v24H48a16 16 0 0 0-16 16v80a16 16 0 0 0 16 16h24v24a16 16 0 0 0 16 16h80a16 16 0 0 0 16-16v-24h24a16 16 0 0 0 16-16V88a16 16 0 0 0-16-16ZM88 48h80v24H88Zm80 160H88v-24h80Zm40-40H48V88h160v80Z"/></svg></span>Grafika NVIDIA pro rychlý přepis (bez ní to jde na procesoru, jen pomaleji)</li>
+      <li><span class="fi" aria-hidden="true"><svg viewBox="0 0 256 256" width="18" height="18"><path fill="currentColor" d="M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24Zm0 192a88 88 0 1 1 88-88 88.1 88.1 0 0 1-88 88Zm12-88a12 12 0 1 1-12-12 12 12 0 0 1 12 12Z"/></svg></span>Asi 2,5 GB volného místa</li>
+    </ul>
+    <p>Otevři PowerShell, vlož tenhle příkaz a potvrď Enterem. Stáhne Mluvku i přepisový model a vytvoří zástupce na ploše.</p>
+    <div class="cmd">
+      <code id="cmd-text">irm https://raw.githubusercontent.com/malaveselahranolka/mluvka/main/instalace.ps1 | iex</code>
+      <button id="copy" class="btn btn-prim btn-sm">Zkopírovat</button>
+    </div>
+    <p class="copy-live" id="copy-live" aria-live="polite"></p>
+    <p><a class="link" href="https://github.com/malaveselahranolka/mluvka#instalace">Ruční instalace a odinstalace v README</a></p>
+  </div>
+</section>
+
+<!-- 12. ZÁVĚREČNÉ CTA -->
+<section class="final" id="final">
+  <video class="final-bg" poster="media/mluvka-video-poster.webp" muted loop playsinline preload="none" aria-hidden="true">
+    <source src="media/mluvka-video.mp4" type="video/mp4">
+  </video>
+  <div class="wrap final-in">
+    <h2>Zítra ráno napíšeš<br>první e-mail nahlas</h2>
+    <p>Stáhne se, nastaví a za pár minut můžeš diktovat. Když se ti to nebude líbit, smažeš to jedním příkazem.</p>
+    <a class="btn btn-prim btn-lg" href="#instalace">Nainstalovat zdarma</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot-sec">
+  <div class="wrap">
+    <div class="foot-cols">
+      <div>
+        <p>Mluvka je open source pod licencí MIT.</p>
+        <p>Přepisový model <a class="link" href="https://huggingface.co/moravianai/CzechSpeech">CzechSpeech</a> je od Moravian AI pod licencí CC BY-NC 4.0, zdarma pro nekomerční použití.</p>
+      </div>
+      <nav class="foot-links" aria-label="Odkazy">
+        <a href="https://github.com/malaveselahranolka/mluvka">GitHub</a>
+        <a href="https://github.com/malaveselahranolka/mluvka/issues">Nahlásit chybu</a>
+        <a href="https://github.com/malaveselahranolka/mluvka/blob/main/LICENSE">Licence</a>
+      </nav>
+    </div>
+    <div class="wordmark" aria-hidden="true">
+      <svg class="mark-big" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#33223A"/><g fill="#FFB37A"><rect x="11" y="23" width="10" height="18" rx="5"/><rect x="27" y="15" width="10" height="34" rx="5"/><rect x="43" y="19" width="10" height="26" rx="5"/></g></svg>
+      <span>Mluvka</span>
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

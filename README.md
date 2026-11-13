@@ -5,6 +5,32 @@ Přepis dělá model **CzechSpeech** na tvé grafice (RTX 4050), zvuk nikdy neod
 Text pak může uhladit **Claude Haiku 5.5** (výplňová slova, přeřeknutí, odrážky) a umí i příkazy nad označeným textem.
 To je jediná část, kde text odchází ven (k Anthropicu), a jen když nastavíš API klíč. Druhou volitelnou výjimkou je kanál (webhook).
 
+Web projektu: <https://malaveselahranolka.github.io/mluvka/>
+
+## Instalace
+
+Otevři PowerShell a vlož tenhle příkaz:
+
+```powershell
+irm https://raw.githubusercontent.com/malaveselahranolka/mluvka/main/instalace.ps1 | iex
+```
+
+Co skript udělá:
+
+1. Ověří Windows 64bit a PowerShell 5.1+.
+2. Najde Python 3.11+, a když chybí, nabídne instalaci přes `winget`.
+3. Stáhne kód do `%LOCALAPPDATA%\Mluvka\app`.
+4. Vytvoří `%LOCALAPPDATA%\Mluvka\venv` a nainstaluje balíčky.
+5. Stáhne whisper.cpp b5454 (s grafikou NVIDIA verzi pro CUDA 12.4, jinak pro procesor) do `%LOCALAPPDATA%\Mluvka\bin\whisper`.
+6. Stáhne model `ggml-czechspeech-q5_0.bin` (574 MB) a ověří jeho SHA256.
+7. Vytvoří zástupce na Ploše a v nabídce Start.
+
+**Požadavky:** Windows 10 nebo 11 64bit, asi 2,5 GB volného místa. Grafika NVIDIA není nutná, ale bez ní přepis běží na procesoru a trvá déle.
+
+**Aktualizace:** spusť stejný příkaz znovu. Přepíše se jen kód, model ani nastavení se nestahují a nemažou.
+
+Model CzechSpeech je pod licencí CC BY-NC 4.0, tedy zdarma pro nekomerční použití.
+
 ## Rychlý test (5 minut)
 
 1. Otevři **Mluvka** z plochy nebo z nabídky Start (zástupce s ikonou švestkového kolečka).
@@ -62,6 +88,8 @@ Když v **Historii** opravíš přepis diktátu (ikona tužky → úprava textu 
 - Přehled posledních až 20 dvojic najdeš pod **Slovník → Paměť chyb** včetně počtu výskytů; od dvou opakování tam má dvojice tlačítko **Přidat do Oprav** a paměť můžeš kdykoliv vymazat.
 - Pokud máš zapnuté **AI úpravy**, nejnovější příklady z Paměti chyb (posledních až **5** úprav) se posílají **Claude Haiku 5.5** jako **text** spolu s přepisem, aby se při čištění řídil tvými konkrétními opravami. **Zvuk se nikdy neposílá.**
 
+Mluvka se navíc umí **učit automaticky z oprav přímo v jiných aplikacích** (Nastavení → **Učit se z mých oprav v jiných aplikacích**, výchozí zapnuto). Po vložení diktátu sleduje jen fokusované textové pole dané aplikace po dobu až 120 s (nikdy ne pole pro heslo a nic neodesílá ani neukládá cizí text). Když některé vložené slovo opravíš, dvojice podobných slov se rovnou uloží do Paměti chyb i do **Slovník → Opravy**, záznam v **Historii** dostane štítek **opraveno** a Mluvka ukáže krátké upozornění `Naučeno: …`.
+
 ## Trénink
 
 Stránka **Trénink** slouží ke změření přesnosti na tvém vlastním hlase, přípravě nahrávek pro případné doladění modelu a přepínání modelů:
@@ -74,17 +102,16 @@ Stránka **Trénink** slouží ke změření přesnosti na tvém vlastním hlase
 
 ## Přesnost a rychlost
 
-Mluvka používá ve výchozím nastavení model **CzechSpeech q8_0** (`"model_soubor": "ggml-czechspeech-q8_0.bin"`) a **beam search 5** (`"beam_size": 5` v `config.json`). Model jde přepnout v okně na stránce Trénink → Osobní model. `"beam_size": 1` je rychlejší greedy dekódování za cenu drobné přesnosti.
+Mluvka používá ve výchozím nastavení model **CzechSpeech q5_0** (`"model_soubor": "ggml-czechspeech-q5_0.bin"`, ten stahuje instalátor) a **beam search 5** (`"beam_size": 5` v `config.json`). Model jde přepnout v okně na stránce Trénink → Osobní model. `"beam_size": 1` je rychlejší greedy dekódování za cenu drobné přesnosti.
 
 Měření z 13. 11. 2026 (RTX 4050, 500 vět Common Voice cs, které CzechSpeech při tréninku neviděl, a 40 vět FLEURS-cs):
 
 | model / nastavení | Common Voice | FLEURS | rychlost |
 |---|---:|---:|---:|
 | CzechSpeech q5_0, greedy (`beam_size: 1`) | – | 6,82 % | cca 1,3 s / min |
-| CzechSpeech q5_0, beam 5 | 7,24 % | 6,00 % | cca 3,0 s / min |
-| **CzechSpeech q8_0, beam 5 (výchozí)** | **7,09 %** | **5,87 %** | cca 3,4 s / min |
+| **CzechSpeech q5_0, beam 5 (výchozí)** | **7,24 %** | **6,00 %** | cca 3,0 s / min |
+| CzechSpeech q8_0, beam 5 (lokální kvantizace, nestahuje se) | 7,09 % | 5,87 % | cca 3,4 s / min |
 | doladěný na Common Voice (`ggml-cv1-q5_0.bin`), beam 5 | 7,00 % | 6,28 % | cca 3,0 s / min |
-| NVIDIA Canary-1B-v2 (ONNX int8, pro srovnání; běžel jen na CPU) | 12,70 % | 9,14 % | – |
 | NVIDIA Canary-1B-v2 (int8 ONNX, pro srovnání, v Mluvce není) | 12,70 % | 9,14 % | – |
 | CzechSpeech f16, beam 5 | 7,24 % | 5,59 % | cca 4–5 s / min |
 | CzechSpeech q8_0, beam 8 | 7,21 % | 5,87 % | cca 6 s / min |
@@ -160,6 +187,7 @@ Všechno z okna je uložené v `%LOCALAPPDATA%\Mluvka\config.json` (v liště Ml
 | `kanal_webhook` | HTTPS adresa kanálu, kam se má posílat každý diktát (viz níž) |
 | `kanal_zapnuto` | `true` (výchozí) = posílat diktáty do nastaveného kanálu |
 | `historie`, `historie_dny` | ukládat historii lokálně a kolik dní ji držet (výchozí `30`) |
+| `uceni_z_oprav` | `true` (výchozí) = učit se automaticky z oprav vloženého diktátu v jiných aplikacích |
 | `zvuky` | krátké tóny při začátku a konci nahrávání |
 | `autostart` | spouštět Mluvku po přihlášení do Windows |
 | `beam_size` | velikost beam search při přepisu (`5` výchozí = vyšší přesnost, `1` = rychlejší greedy) |
@@ -244,4 +272,14 @@ Všechna data leží mimo OneDrive v `%LOCALAPPDATA%\Mluvka`:
 
 ## Odinstalace
 
-V okně pod **Nastavení** (nebo v liště) vypni „Spouštět po přihlášení“, ukonči Mluvku a smaž `%LOCALAPPDATA%\Mluvka` a tuto složku.
+V okně pod **Nastavení** (nebo v liště) vypni „Spouštět po přihlášení“ a ukonči Mluvku. Pak smaž zástupce a celou složku s daty:
+
+```powershell
+& "$env:LOCALAPPDATA\Mluvka\venv\Scripts\python.exe" -m mluvka.zastupci --odebrat
+```
+
+```powershell
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\Mluvka"
+```
+
+Ve složce s daty je i stažený kód (`app`), whisper.cpp (`bin`), model (`models`), historie a nastavení. Po smazání nezbude nic.

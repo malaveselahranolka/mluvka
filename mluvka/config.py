@@ -50,6 +50,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "kanal_zapnuto": True,
     "historie": True,
     "historie_dny": 30,
+    "uceni_z_oprav": True,
     "autostart": False,
     "trenink_ukladat_zvuk": False,
     "darce_id": "",
@@ -262,6 +263,21 @@ def load_config(data: Path | None = None) -> dict[str, Any]:
     return copy.deepcopy(DEFAULT_CONFIG)
 
 
+def opravy_key_set(cfg: dict[str, Any]) -> set[tuple[str, str]]:
+    """Vrátí normalizovanou množinu dvojic (z, na) ze ``slovnik.opravy`` pro kontrolu duplicit."""
+    sl = cfg.get("slovnik")
+    if not isinstance(sl, dict):
+        return set()
+    opravy = sl.get("opravy")
+    if not isinstance(opravy, list):
+        return set()
+    return {
+        (str(p[0]).strip().casefold(), str(p[1]).strip().casefold())
+        for p in opravy
+        if isinstance(p, (list, tuple)) and len(p) == 2
+    }
+
+
 def webhook_host(cfg: dict[str, Any]) -> str | None:
     url = str(cfg.get("kanal_webhook", "") or "").strip()
     if not url:
@@ -347,6 +363,41 @@ class ConfigStore:
                     candidate[key] = copy.deepcopy(value)
             self._save_candidate(candidate)
             return copy.deepcopy(self.cfg)
+
+    def add_opravy(self, pairs: list[list[str]] | list[tuple[str, str]]) -> int:
+        """Bezpečně přidá nové dvojice do ``slovnik.opravy`` bez duplicit pod zámkem."""
+        if not pairs:
+            return 0
+        with self._lock:
+            self.reload_if_changed()
+            if self.config_invalid:
+                raise ConfigInvalidError(CONFIG_INVALID_MESSAGE)
+            candidate = copy.deepcopy(self.cfg)
+            slovnik = candidate.get("slovnik")
+            if not isinstance(slovnik, dict):
+                slovnik = {}
+                candidate["slovnik"] = slovnik
+            raw_opravy = slovnik.get("opravy")
+            opravy = list(raw_opravy) if isinstance(raw_opravy, list) else []
+            seen = opravy_key_set(candidate)
+            added = 0
+            for pair in pairs:
+                if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+                    continue
+                z = str(pair[0]).strip()
+                na = str(pair[1]).strip()
+                if not z or not na or z == na:
+                    continue
+                key = (z.casefold(), na.casefold())
+                if key in seen:
+                    continue
+                seen.add(key)
+                opravy.append([z, na])
+                added += 1
+            if added:
+                slovnik["opravy"] = opravy
+                self._save_candidate(candidate)
+            return added
 
     def reload_if_changed(self) -> bool:
         with self._lock:

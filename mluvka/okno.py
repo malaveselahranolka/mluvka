@@ -65,6 +65,7 @@ ALLOWED_SETTINGS_KEYS = frozenset(
         "kanal_zapnuto",
         "historie",
         "historie_dny",
+        "uceni_z_oprav",
         "autostart",
         "trenink_ukladat_zvuk",
     }
@@ -76,6 +77,7 @@ BOOLEAN_KEYS = frozenset(
         "slovnik_do_promptu",
         "kanal_zapnuto",
         "historie",
+        "uceni_z_oprav",
         "autostart",
         "trenink_ukladat_zvuk",
     }
@@ -422,14 +424,7 @@ def _state_for(api: Api) -> _ApiState:
     return _API_STATES[api]
 
 
-def _opravy_key_set(cfg: dict[str, Any]) -> set[tuple[str, str]]:
-    sl = cfg.get("slovnik") or {}
-    opravy = sl.get("opravy") or []
-    return {
-        (str(p[0]).strip().casefold(), str(p[1]).strip().casefold())
-        for p in opravy
-        if isinstance(p, (list, tuple)) and len(p) == 2
-    }
+_opravy_key_set = config.opravy_key_set
 
 
 def _pamet_list(state: _ApiState, limit: int = 20) -> list[dict[str, Any]]:

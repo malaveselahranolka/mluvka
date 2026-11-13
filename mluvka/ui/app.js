@@ -801,6 +801,7 @@
     }
 
     setSwitchState($("toggle-sounds"), Boolean(cfg.zvuky));
+    setSwitchState($("toggle-learn-edits"), cfg.uceni_z_oprav !== false);
     setSwitchState($("toggle-autostart"), Boolean(cfg.autostart));
 
     const srvHook = String(cfg.kanal_webhook || "");
@@ -2402,6 +2403,7 @@
     $("sel-vk").addEventListener("change", () => { void savePatch({ klavesa_vk: Number($("sel-vk").value) }); });
     $("sel-mic").addEventListener("change", () => { void savePatch({ mikrofon: $("sel-mic").value || "" }); });
     bindSwitch("toggle-sounds", (next) => savePatch({ zvuky: next }));
+    bindSwitch("toggle-learn-edits", (next) => savePatch({ uceni_z_oprav: next }));
     bindSwitch("toggle-autostart", (next) => savePatch({ autostart: next }));
     $("input-webhook").addEventListener("input", () => { scheduleDebounced("webhook", flushWebhook); });
     $("input-webhook").addEventListener("focusout", () => { if (timers.webhook) void flushWebhook(); });

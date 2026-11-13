@@ -52,43 +52,116 @@
   const track = $("track");
   track.innerHTML += track.innerHTML;
 
-  /* ---------- přilepené scény ---------- */
-  const progress = (outer) => {
-    const r = outer.getBoundingClientRect();
-    const total = r.height - window.innerHeight;
-    if (total <= 0) return 0;
-    return clamp01(-r.top / total);
-  };
+  /* ---------- scény, které se přehrají samy, když jsou vidět ---------- */
   const desktopPin = () => window.matchMedia("(min-width: 861px)").matches && !reduce.matches;
+  // render(p) dostane průběh 0..1 za dobu ms; spustí se při každém vstupu do obrazu
+  const playOnView = (el, ms, render, threshold = 0.45) => {
+    let raf = 0;
+    const run = () => {
+      cancelAnimationFrame(raf);
+      if (reduce.matches) return render(1);
+      const t0 = performance.now();
+      const step = (now) => {
+        const p = clamp01((now - t0) / ms);
+        render(p);
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    };
+    new IntersectionObserver((en) => en.forEach((e) => e.isIntersecting && run()), { threshold }).observe(el);
+    return run;
+  };
 
-  /* scéna 1: rychlost */
-  const speedOuter = $("speed-outer");
-  const cardSlow = $("card-slow");
-  const cardFast = $("card-fast");
+  /* hero: věta se nadiktuje bez diakritiky, pak na písmena spadnou háčky a čárky */
+  const HACKY = [
+    "Příliš žluťoučký kůň úpěl ďábelské ódy.",
+    "Ve středu pošlu Jiřímu účtenky z Brna.",
+    "Děkuji, zítra ráno se ozvu s návrhem.",
+  ];
+  const hLine = $("hacky-line"), hPill = $("hacky-pill"), hState = $("hacky-state");
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  // NFD rozloží „ř" na „r" + kombinující háček; podle toho víme, kam co spadne
+  const ZNAK = { "\u030C": "ˇ", "\u0301": "´", "\u030A": "˚" };
+  const build = (veta) => {
+    hLine.textContent = "";
+    const marks = [];
+    veta.split(" ").forEach((slovo, i) => {
+      const w = document.createElement("span");
+      w.className = "w";
+      w.style.animationDelay = `${i * 90}ms`;
+      for (const ch of slovo) {
+        const [base, ...comb] = ch.normalize("NFD");
+        const c = document.createElement("span");
+        c.className = "c";
+        c.textContent = comb.length ? base : ch;
+        if (comb.length) {
+          c.classList.add("bare");
+          marks.push([c, ch, ZNAK[comb[0]] || "´"]);
+        }
+        w.appendChild(c);
+      }
+      hLine.append(w, " ");
+    });
+    return marks;
+  };
+  let heroVisible = true;
+  new IntersectionObserver((en) => (heroVisible = en[0].isIntersecting)).observe(hLine);
+  (async () => {
+    if (reduce.matches) {
+      hLine.textContent = HACKY[0];
+      hPill.classList.add("idle");
+      hState.textContent = "Hotovo";
+      return;
+    }
+    for (let i = 0; ; i = (i + 1) % HACKY.length) {
+      while (!heroVisible || document.hidden) await sleep(500);
+      hPill.classList.remove("idle");
+      hState.textContent = "Mluvka poslouchá";
+      const marks = build(HACKY[i]);
+      await sleep(HACKY[i].split(" ").length * 90 + 900);
+      hState.textContent = "Doplňuji háčky a čárky";
+      for (const [c, plny, znak] of marks) {
+        const m = document.createElement("span");
+        m.className = "mark";
+        m.textContent = znak;
+        c.appendChild(m);
+        // po dopadu vyměnit za skutečné písmeno, ať sedí kerning a tvar
+        setTimeout(() => {
+          c.textContent = plny;
+          c.classList.remove("bare");
+          c.classList.add("landed");
+          setTimeout(() => c.classList.remove("landed"), 500);
+        }, 480);
+        await sleep(110);
+      }
+      await sleep(700);
+      hPill.classList.add("idle");
+      hState.textContent = "Vloženo";
+      await sleep(2600);
+    }
+  })();
+
+  /* scéna 1: rychlost. Stejná věta psaná a mluvená, čas zrychlený 2,5×. */
+  const slowText = $("slow-text"), slowTime = $("slow-time");
+  const fastTime = $("fast-time");
   const raceText = $("race-text");
   const raceVideo = $("race-video");
   const VETA_RACE = "Ahoj, posílám shrnutí z porady. Spuštění necháváme na pátek a podklady doplním do zítřka.";
   const RACE_WORDS = VETA_RACE.split(" ");
-
-  scrollJobs.push(() => {
-    if (!desktopPin()) {
-      cardSlow.style.cssText = "";
-      cardFast.style.cssText = "";
-      raceText.textContent = VETA_RACE;
-      return;
-    }
-    const p = progress(speedOuter);
-    // 0 až 0,35: klid. 0,35 až 0,75: pomalá karta mizí, rychlá se zmenšuje. 0,75 až 1: text.
-    const a = clamp01((p - 0.35) / 0.4);
-    cardSlow.style.opacity = String(1 - a);
-    cardSlow.style.transform = `translateX(${-a * 90}px) scale(${lerp(1, 0.82, a)})`;
-    cardFast.style.flexBasis = `${lerp(100, 46, a)}%`;
-    // dorovnat misto po zmizele pomale karte (jeji sirka + mezera), at karta skonci na stredu
-    cardFast.style.transform = `translateX(${(a * -(cardSlow.offsetWidth + 28)) / 2}px)`;
-    const t = clamp01((p - 0.62) / 0.33);
-    const n = Math.round(t * RACE_WORDS.length);
-    raceText.textContent = RACE_WORDS.slice(0, n).join(" ");
+  const SLOW_S = (RACE_WORDS.length / 40) * 60;  // skutečné sekundy při 40 slovech za minutu
+  const FAST_S = (RACE_WORDS.length / 150) * 60; // při 150
+  const fmt = (x) => `${x.toFixed(1).replace(".", ",")} s`;
+  const replayRace = playOnView($("race"), (SLOW_S * 1000) / 2.5, (p) => {
+    const t = p * SLOW_S;
+    const pf = clamp01(t / FAST_S);
+    slowText.textContent = VETA_RACE.slice(0, Math.round(p * VETA_RACE.length));
+    raceText.textContent = RACE_WORDS.slice(0, Math.round(pf * RACE_WORDS.length)).join(" ");
+    slowTime.textContent = p < 1 ? fmt(t) : `Hotovo za ${fmt(SLOW_S)}`;
+    fastTime.textContent = pf < 1 ? fmt(t) : `Hotovo za ${fmt(FAST_S)}`;
+    slowTime.classList.toggle("done", p >= 1);
+    fastTime.classList.toggle("done", pf >= 1);
   });
+  $("race-replay").addEventListener("click", replayRace);
 
   /* scéna 2: soukromí. Hlas vyrazí k cizímu serveru, narazí na hranici
      a vrátí se dovnitř jako text. */
@@ -111,7 +184,7 @@
     [nodeMic, nodeGpu, nodeTxt].forEach((n) => n.classList.remove("lit"));
   };
 
-  scrollJobs.push(() => {
+  const privRender = (p) => {
     if (!desktopPin()) {
       privReset();
       nodeTxt.classList.add("lit");
@@ -120,7 +193,6 @@
       flyer.style.transform = "translateX(-50%)";
       return;
     }
-    const p = progress(privOuter);
     const up = clamp01((p - 0.12) / 0.26);   // hlas stoupá k serveru
     const bounce = clamp01((p - 0.38) / 0.1); // náraz na hranici
     const down = clamp01((p - 0.48) / 0.26);  // vrací se jako text dovnitř
@@ -135,7 +207,10 @@
     nodeMic.classList.toggle("lit", p > 0.04 && up < 1);
     nodeGpu.classList.toggle("lit", down > 0.25 && down < 0.9);
     nodeTxt.classList.toggle("lit", down > 0.8);
-  });
+  };
+  privRender(0);
+  playOnView(privOuter, 4200, privRender);
+  window.addEventListener("resize", () => desktopPin() || privRender(1));
 
   /* ---------- demo diktátu ---------- */
   const VETY = [
@@ -269,16 +344,6 @@
   autoplay($("loop"));
   autoplay(document.querySelector(".final-bg"));
 
-  /* ---------- lepivý seznam vlastností ---------- */
-  const featBtns = Array.from(document.querySelectorAll("#feat-list button"));
-  const featCards = Array.from(document.querySelectorAll(".feat-card"));
-  const showFeat = (idx) => {
-    featBtns.forEach((b) => b.setAttribute("aria-current", String(b.dataset.f === String(idx))));
-    featCards.forEach((c) => (c.hidden = c.dataset.f !== String(idx)));
-    if (idx === 2) playFix();
-  };
-  featBtns.forEach((b) => b.addEventListener("click", () => showFeat(Number(b.dataset.f))));
-
   /* ---------- demo učení oprav ---------- */
   const fixWord = $("fix-word");
   const fixToast = $("fix-toast");
@@ -310,6 +375,10 @@
     at(2300, () => (fixToast.hidden = false));
   }
   $("fix-replay").addEventListener("click", playFix);
+  const fixIo = new IntersectionObserver((en) => {
+    if (en[0].isIntersecting) { fixIo.disconnect(); playFix(); }
+  }, { threshold: 0.6 });
+  fixIo.observe($("fix"));
 
   /* ---------- taby aplikace ---------- */
   const POPISKY = {

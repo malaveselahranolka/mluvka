@@ -51,31 +51,23 @@
 
 <!-- 1. HERO -->
 <section class="hero" id="hero">
-  <div class="snips" aria-hidden="true">
-    <span class="snip s1">tak jo, pošlu ti to do pátku</span>
-    <span class="snip s2">mrkni ještě na ten odstavec</span>
-    <span class="snip s3">schůzka je ve středu v deset</span>
-    <span class="snip s4">díky, ozvu se odpoledne</span>
-  </div>
   <div class="wrap hero-in">
-    <h1 class="rv">Nepiš.<br><span class="hl">Mluv.</span></h1>
-    <p class="lead rv">Podrž klávesu, mluv a pusť. Mluvka přepíše češtinu přímo v tvém počítači a vloží text tam, kde máš kurzor.</p>
-    <div class="cta rv">
-      <a class="btn btn-prim btn-lg" href="#instalace">Nainstalovat zdarma</a>
-      <a class="btn btn-ghost btn-lg" href="#vyzkousej">Vyzkoušet rovnou tady</a>
-    </div>
-    <p class="avail rv">Zdarma a open source. Windows 10 a 11.</p>
-    <div class="wavepill rv" aria-hidden="true">
-      <span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-      Mluvka poslouchá
+    <div class="hero-copy">
+      <h1 class="rv">Nepiš.<br><span class="hl">Mluv.</span></h1>
+      <p class="lead rv">Podrž klávesu, mluv a pusť. Mluvka přepíše češtinu přímo v tvém počítači a vloží text tam, kde máš kurzor.</p>
+      <div class="cta rv">
+        <a class="btn btn-prim btn-lg" href="#instalace">Nainstalovat zdarma</a>
+        <a class="btn btn-ghost btn-lg" href="#vyzkousej">Vyzkoušet rovnou tady</a>
+      </div>
+      <p class="avail rv">Zdarma a open source. Windows 10 a 11.</p>
     </div>
   </div>
-</section>
-
-<!-- 2. PÁS APLIKACÍ -->
-<section class="plate plate-dark tight" id="kam">
   <div class="wrap">
-    <p class="plate-lead">Píše tam, kde zrovna jsi</p>
+    <div class="hacky rv" aria-hidden="true">
+      <p class="hacky-pill" id="hacky-pill"><span class="bars"><i></i><i></i><i></i><i></i><i></i></span><span id="hacky-state">Mluvka poslouchá</span></p>
+      <p class="hacky-line" id="hacky-line"></p>
+      <p class="hacky-note">Česky, i s háčky a čárkami.</p>
+    </div>
   </div>
   <div class="ticker" aria-hidden="true">
     <div class="track" id="track">
@@ -95,7 +87,8 @@
           <div class="card-slow" id="card-slow">
             <p class="card-k">Psaní na klávesnici</p>
             <p class="card-v">40 <span>slov za minutu</span></p>
-            <div class="typing" aria-hidden="true"><i></i><i></i><i></i></div>
+            <p class="slow-text"><span id="slow-text"></span><span class="caret" aria-hidden="true"></span></p>
+            <p class="race-time" id="slow-time" aria-hidden="true">0,0 s</p>
           </div>
           <div class="card-fast" id="card-fast">
             <video id="race-video" poster="media/mluvka-video-poster.webp" width="1280" height="720" muted loop playsinline preload="metadata" aria-hidden="true">
@@ -105,9 +98,11 @@
               <p class="card-k">Mluvení</p>
               <p class="card-v">150 <span>slov za minutu</span></p>
             </div>
+            <p class="race-time race-time-fast" id="fast-time" aria-hidden="true">0,0 s</p>
             <p class="race-text" id="race-text" aria-hidden="true"></p>
           </div>
         </div>
+        <p class="race-again"><button class="btn btn-ghost btn-sm" id="race-replay">Pustit závod znovu</button></p>
         <p class="pin-note" id="speed-note">Běžné tempo psaní a běžné tempo řeči. Minutu diktátu má Mluvka přepsanou a vloženou za 2,6 sekundy.</p>
       </div>
     </div>
@@ -149,14 +144,9 @@
   <div class="wrap">
     <h2>Mluvka ti rozumí,<br>ne jen slyší</h2>
     <p class="sub">Vycpávky, přeřeknutí a odrážky uhladí napojení na Claude. Zapneš ho vlastním API klíčem a platíš přímo Anthropicu. Bez klíče běží přepis i slovník dál, jen bez uhlazení.</p>
-    <div class="sticky-wrap">
-      <ol class="feat-list" id="feat-list">
-        <li><button data-f="0" aria-current="true"><span>Mluv, jak ti zobák narostl</span></button></li>
-        <li><button data-f="1">Z výčtu udělá odrážky</button></li>
-        <li><button data-f="2">Naučí se tvoje slova</button></li>
-      </ol>
-      <div class="feat-stage" id="feat-stage">
+    <div class="feat-grid">
         <figure class="feat-card" data-f="0">
+          <h3>Mluv, jak ti zobák narostl</h3>
           <div class="fc-body">
             <p class="fc-raw">„Takže ehm, v pondělí, teda ne, v úterý pošlu ten návrh, no, a pak se ozvu.“</p>
             <p class="fc-arrow" aria-hidden="true">
@@ -166,7 +156,8 @@
           </div>
           <figcaption>Výplňová slova, pauzy i odvolané věty jdou pryč. Zůstane to, cos chtěl říct.</figcaption>
         </figure>
-        <figure class="feat-card" data-f="1" hidden>
+        <figure class="feat-card" data-f="1">
+          <h3>Z výčtu udělá odrážky</h3>
           <div class="fc-body">
             <p class="fc-raw">„Za prvé dodělat formulář, za druhé napsat testy, za třetí nasadit.“</p>
             <p class="fc-arrow" aria-hidden="true">
@@ -180,17 +171,17 @@
           </div>
           <figcaption>Mluvený výčet se sám srovná do odrážek. Interpunkci a velká písmena doplní za tebe.</figcaption>
         </figure>
-        <figure class="feat-card" data-f="2" hidden>
+        <figure class="feat-card" data-f="2">
+          <h3>Naučí se tvoje slova</h3>
           <div class="fc-body">
             <div class="fix" id="fix">
-              <div class="toast" id="fix-toast" hidden>Naučeno: klódovi → Claudovi</div>
+              <div class="toast" id="fix-toast">Naučeno: klódovi → Claudovi</div>
               <p class="fix-line">Pošli to <span class="fix-word" id="fix-word">klódovi</span> do pátku.</p>
             </div>
             <button class="btn btn-ghost btn-sm" id="fix-replay">Přehrát znovu</button>
           </div>
           <figcaption>Opravíš slovo přímo v e-mailu nebo v Claude a Mluvka si opravu uloží. Do aplikace nic nepřepisuješ.</figcaption>
         </figure>
-      </div>
     </div>
   </div>
 </section>

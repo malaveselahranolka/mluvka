@@ -8,6 +8,7 @@ import os
 import platform
 import re
 import subprocess
+import sys
 import threading
 import time
 import wave
@@ -176,33 +177,70 @@ def stroj(data: Path | None = None) -> dict[str, str]:
     cached = _read_json(path, None)
     if isinstance(cached, dict) and cached.get("gpu"):
         return cached
-    gpu = "Bez grafické karty NVIDIA"
-    try:
-        r = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"], capture_output=True,
-                           text=True, timeout=5, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-        line = r.stdout.strip().splitlines()[0] if r.returncode == 0 and r.stdout.strip() else ""
-        if line:
-            name, mem = [x.strip() for x in line.split(",", 1)]
-            gb = round(int(re.sub(r"\D", "", mem) or 0) / 1024)
-            gpu = f"{name}, {gb} GB"
-    except (OSError, subprocess.SubprocessError, ValueError, IndexError):
-        pass
-    cpu = platform.processor() or "Neznámý procesor"
-    try:
-        import winreg
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as k:
-            cpu = str(winreg.QueryValueEx(k, "ProcessorNameString")[0]).strip()
-    except OSError:
-        pass
-    ram = ""
-    try:
-        ms = _MEMSTATUS(); ms.dwLength = ctypes.sizeof(_MEMSTATUS)
-        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(ms)):
-            ram = f"{round(ms.ullTotalPhys / 1024**3)} GB"
-    except (AttributeError, OSError):
-        pass
-    info = {"gpu": gpu, "cpu": cpu, "ram": ram or "neznámá", "os": f"{platform.system()} {platform.release()} ({platform.version()})",
-            "engine": "whisper.cpp b5454, CUDA 12.4"}
+    if sys.platform == "darwin":
+        arch = platform.machine().lower()
+        gpu = "Apple Silicon (Metal)" if arch == "arm64" else "macOS GPU"
+        try:
+            sp = subprocess.run(["system_profiler", "SPDisplaysDataType"], capture_output=True, text=True, timeout=5)
+            if sp.returncode == 0 and sp.stdout:
+                m_chip = re.search(r"Chipset Model:\s*(.+)", sp.stdout)
+                if m_chip:
+                    gpu = m_chip.group(1).strip()
+        except (OSError, subprocess.SubprocessError):
+            pass
+        cpu = platform.processor() or platform.machine() or "Apple Silicon"
+        try:
+            cr = subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True, timeout=3)
+            if cr.returncode == 0 and cr.stdout.strip():
+                cpu = cr.stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            pass
+        ram = ""
+        try:
+            pages = int(os.sysconf("SC_PAGE_SIZE")) * int(os.sysconf("SC_PHYS_PAGES"))
+            if pages > 0:
+                ram = f"{round(pages / 1024**3)} GB"
+        except (AttributeError, OSError, ValueError):
+            pass
+        if not ram:
+            try:
+                mr = subprocess.run(["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, timeout=3)
+                if mr.returncode == 0 and mr.stdout.strip().isdigit():
+                    ram = f"{round(int(mr.stdout.strip()) / 1024**3)} GB"
+            except (OSError, subprocess.SubprocessError, ValueError):
+                pass
+        mac_ver = platform.mac_ver()[0]
+        os_str = f"macOS {mac_ver}" if mac_ver else f"{platform.system()} {platform.release()}"
+        engine = "whisper.cpp (Metal)" if arch == "arm64" else "whisper.cpp (CPU)"
+        info = {"gpu": gpu, "cpu": cpu, "ram": ram or "neznámá", "os": os_str, "engine": engine}
+    else:
+        gpu = "Bez grafické karty NVIDIA"
+        try:
+            r = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"], capture_output=True,
+                               text=True, timeout=5, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            line = r.stdout.strip().splitlines()[0] if r.returncode == 0 and r.stdout.strip() else ""
+            if line:
+                name, mem = [x.strip() for x in line.split(",", 1)]
+                gb = round(int(re.sub(r"\D", "", mem) or 0) / 1024)
+                gpu = f"{name}, {gb} GB"
+        except (OSError, subprocess.SubprocessError, ValueError, IndexError):
+            pass
+        cpu = platform.processor() or "Neznámý procesor"
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as k:
+                cpu = str(winreg.QueryValueEx(k, "ProcessorNameString")[0]).strip()
+        except OSError:
+            pass
+        ram = ""
+        try:
+            ms = _MEMSTATUS(); ms.dwLength = ctypes.sizeof(_MEMSTATUS)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(ms)):
+                ram = f"{round(ms.ullTotalPhys / 1024**3)} GB"
+        except (AttributeError, OSError):
+            pass
+        info = {"gpu": gpu, "cpu": cpu, "ram": ram or "neznámá", "os": f"{platform.system()} {platform.release()} ({platform.version()})",
+                "engine": "whisper.cpp b5454, CUDA 12.4"}
     try:
         _write_json(path, info)
     except OSError:

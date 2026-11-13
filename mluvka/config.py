@@ -6,6 +6,8 @@ import copy
 import json
 import logging
 import os
+import shutil
+import sys
 import threading
 import time
 from pathlib import Path
@@ -59,16 +61,27 @@ DEFAULT_CONFIG: dict[str, Any] = {
 }
 
 DEFAULT_MODEL_SOUBOR = "ggml-czechspeech-q5_0.bin"
+VK_MAC_FN = 0xFF
 
 
 def repo_dir() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def default_config() -> dict[str, Any]:
+    """Vrátí výchozí konfiguraci s výchozí klávesou pro aktuální platformu."""
+    cfg = copy.deepcopy(DEFAULT_CONFIG)
+    if sys.platform == "darwin":
+        cfg["klavesa_vk"] = VK_MAC_FN
+    return cfg
+
+
 def data_dir() -> Path:
     override = os.environ.get("MLUVKA_DATA", "").strip()
     if override:
         return Path(override)
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Mluvka"
     local_app_data = os.environ.get("LOCALAPPDATA", "").strip()
     if local_app_data:
         return Path(local_app_data) / "Mluvka"
@@ -80,6 +93,14 @@ def config_path(data: Path | None = None) -> Path:
 
 
 def whisper_exe_path(data: Path | None = None) -> Path:
+    if sys.platform == "darwin":
+        candidate = (data or data_dir()) / "bin" / "whisper" / "whisper-server"
+        if candidate.is_file():
+            return candidate
+        found = shutil.which("whisper-server")
+        if found:
+            return Path(found)
+        return candidate
     return (data or data_dir()) / "bin" / "whisper" / "whisper-server.exe"
 
 
@@ -233,16 +254,16 @@ def save_config(cfg: dict[str, Any], data: Path | None = None) -> Path:
 
 
 def _try_load_config_status(data: Path | None = None) -> tuple[dict[str, Any] | None, str]:
+    base = default_config()
     path = config_path(data)
     if not path.exists():
-        cfg = copy.deepcopy(DEFAULT_CONFIG)
-        save_config(cfg, data=data)
-        return cfg, "ok"
+        save_config(base, data=data)
+        return base, "ok"
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(raw, dict):
             raise ValueError("config.json must be a JSON object")
-        return _deep_merge(DEFAULT_CONFIG, raw), "ok"
+        return _deep_merge(base, raw), "ok"
     except OSError as exc:
         log.warning("Přechodná chyba čtení config.json (%s).", exc)
         return None, "transient"
@@ -260,7 +281,7 @@ def load_config(data: Path | None = None) -> dict[str, Any]:
     cfg, ok = _try_load_config(data=data)
     if ok and cfg is not None:
         return cfg
-    return copy.deepcopy(DEFAULT_CONFIG)
+    return default_config()
 
 
 def opravy_key_set(cfg: dict[str, Any]) -> set[tuple[str, str]]:
@@ -307,11 +328,11 @@ class ConfigStore:
                 init_stamp if init_stamp is not None else self._read_stamp()
             )
         elif status == "transient":
-            self.cfg = copy.deepcopy(DEFAULT_CONFIG)
+            self.cfg = default_config()
             self._disk_valid = True
             self._stamp = None
         else:
-            self.cfg = copy.deepcopy(DEFAULT_CONFIG)
+            self.cfg = default_config()
             self._disk_valid = False
             self._stamp = init_stamp
 

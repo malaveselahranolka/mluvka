@@ -31,6 +31,28 @@ Co skript udělá:
 
 Model CzechSpeech je pod licencí CC BY-NC 4.0, tedy zdarma pro nekomerční použití.
 
+## macOS (beta)
+
+Experimentální podpora pro **macOS 14+ (Apple Silicon)**. Zatím nebyla testovaná na skutečném Macu.
+
+Otevři Terminál a spusť:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/malaveselahranolka/mluvka/main/instalace.sh | bash
+```
+
+Skript přes Homebrew nainstaluje `whisper-cpp` (Metal), Python 3.12 a `python-tk@3.12`, stáhne kód a model `ggml-czechspeech-q5_0.bin` do `~/Library/Application Support/Mluvka` a vytvoří `~/Applications/Mluvka.app`.
+
+Po instalaci:
+
+1. V **Nastavení systému → Soukromí a zabezpečení** povol pro Mluvku / Python tato 3 oprávnění: **Mikrofon**, **Zpřístupnění** (vkládání přepisu) a **Sledování vstupu** (zachycení globální klávesy).
+2. V **Nastavení systému → Klávesnice** nastav **Stiskem 🌐 → Nedělat nic**, aby výchozí klávesa pro diktát (**Fn / 🌐**) neotevírala výběr emodži.
+
+**Co na Macu zatím nefunguje:**
+
+- učení oprav z cizích aplikací,
+- lokální doladění modelu (vyžaduje Windows s NVIDIA GPU; měření přesnosti modelu funguje).
+
 ## Rychlý test (5 minut)
 
 1. Otevři **Mluvka** z plochy nebo z nabídky Start (zástupce s ikonou švestkového kolečka).

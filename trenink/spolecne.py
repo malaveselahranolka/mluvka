@@ -7,6 +7,8 @@ import math
 import os
 import random
 import re
+import shutil
+import sys
 import threading
 import time
 import unicodedata
@@ -31,6 +33,8 @@ def data_dir(data: Path | None = None) -> Path:
     override = os.environ.get("MLUVKA_DATA", "").strip()
     if override:
         return Path(override)
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Mluvka"
     local_app_data = os.environ.get("LOCALAPPDATA", "").strip()
     if local_app_data:
         return Path(local_app_data) / "Mluvka"
@@ -107,6 +111,14 @@ def unique_run_name(base_name: str, data: Path | None = None) -> str:
 
 
 def whisper_quantize_exe(data: Path | None = None) -> Path:
+    if sys.platform == "darwin":
+        candidate = data_dir(data) / "bin" / "whisper" / "whisper-quantize"
+        if candidate.is_file():
+            return candidate
+        found = shutil.which("whisper-quantize")
+        if found:
+            return Path(found)
+        return candidate
     return data_dir(data) / "bin" / "whisper" / "whisper-quantize.exe"
 
 

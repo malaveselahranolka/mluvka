@@ -5,6 +5,8 @@ from __future__ import annotations
 import copy
 import json
 import os
+import subprocess
+import sys
 import threading
 import time
 import unicodedata
@@ -416,7 +418,10 @@ def export_markdown(data: Path | None = None, limit: int = 200) -> Path:
 
 def open_history_markdown(data: Path | None = None) -> Path:
     md_path = export_markdown(data=data)
-    os.startfile(str(md_path))
+    if sys.platform == "darwin":
+        subprocess.Popen(["open", str(md_path)])
+    else:
+        os.startfile(str(md_path))
     return md_path
 
 

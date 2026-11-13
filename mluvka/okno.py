@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import ctypes
-import ctypes.wintypes as wt
 import json
 import logging
 import os
@@ -29,13 +28,19 @@ from mluvka import (
     llm,
     mereni,
     netguard,
-    output,
     pamet,
+    sledovani,
     slovnik_import,
     tray,
     trenink,
     zastupci,
 )
+
+if sys.platform == "darwin":
+    from mluvka import output_mac as output
+    from mluvka import winproc_mac as winproc
+else:
+    from mluvka import output
 
 log = logging.getLogger("mluvka.okno")
 _MODEL_MERENI = mereni.Mereni()  # měření setupu na stránce Model (jen jedno najednou)
@@ -45,6 +50,7 @@ OKNO_MUTEX_NAME = "Local\\MluvkaOkno"
 APP_USER_MODEL_ID = "Mluvka.Mluvka"
 
 ALLOWED_VK = frozenset({163, 161, 20, 120})
+ALLOWED_VK_MAC = frozenset({255, 165, 92, 163})
 ALLOWED_HISTORY_DAYS = frozenset({1, 7, 30, 90, 365})
 ALLOWED_OPEN_URLS = frozenset(
     {
@@ -99,67 +105,79 @@ PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 DETACHED_PROCESS = 0x00000008
 CREATE_NEW_PROCESS_GROUP = 0x00000200
 
-kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-user32 = ctypes.WinDLL("user32", use_last_error=True)
-shell32 = ctypes.WinDLL("shell32", use_last_error=True)
+if sys.platform == "win32":
+    import ctypes.wintypes as wt
 
-WNDENUMPROC = ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    shell32 = ctypes.WinDLL("shell32", use_last_error=True)
 
-kernel32.CreateMutexW.argtypes = [wt.LPVOID, wt.BOOL, wt.LPCWSTR]
-kernel32.CreateMutexW.restype = wt.HANDLE
-kernel32.OpenMutexW.argtypes = [wt.DWORD, wt.BOOL, wt.LPCWSTR]
-kernel32.OpenMutexW.restype = wt.HANDLE
-kernel32.CloseHandle.argtypes = [wt.HANDLE]
-kernel32.CloseHandle.restype = wt.BOOL
-kernel32.OpenProcess.argtypes = [wt.DWORD, wt.BOOL, wt.DWORD]
-kernel32.OpenProcess.restype = wt.HANDLE
-kernel32.QueryFullProcessImageNameW.argtypes = [
-    wt.HANDLE,
-    wt.DWORD,
-    wt.LPWSTR,
-    ctypes.POINTER(wt.DWORD),
-]
-kernel32.QueryFullProcessImageNameW.restype = wt.BOOL
+    WNDENUMPROC = ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
 
-user32.FindWindowW.argtypes = [wt.LPCWSTR, wt.LPCWSTR]
-user32.FindWindowW.restype = wt.HWND
-user32.EnumWindows.argtypes = [WNDENUMPROC, wt.LPARAM]
-user32.EnumWindows.restype = wt.BOOL
-user32.IsWindowVisible.argtypes = [wt.HWND]
-user32.IsWindowVisible.restype = wt.BOOL
-user32.GetWindowTextLengthW.argtypes = [wt.HWND]
-user32.GetWindowTextLengthW.restype = ctypes.c_int
-user32.GetWindowTextW.argtypes = [wt.HWND, wt.LPWSTR, ctypes.c_int]
-user32.GetWindowTextW.restype = ctypes.c_int
-user32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
-user32.GetWindowThreadProcessId.restype = wt.DWORD
-user32.ShowWindow.argtypes = [wt.HWND, ctypes.c_int]
-user32.ShowWindow.restype = wt.BOOL
-user32.SetForegroundWindow.argtypes = [wt.HWND]
-user32.SetForegroundWindow.restype = wt.BOOL
-user32.BringWindowToTop.argtypes = [wt.HWND]
-user32.BringWindowToTop.restype = wt.BOOL
-user32.LoadImageW.argtypes = [
-    wt.HINSTANCE,
-    wt.LPCWSTR,
-    wt.UINT,
-    ctypes.c_int,
-    ctypes.c_int,
-    wt.UINT,
-]
-user32.LoadImageW.restype = wt.HICON
-user32.DestroyIcon.argtypes = [wt.HICON]
-user32.DestroyIcon.restype = wt.BOOL
-user32.SendMessageW.argtypes = [wt.HWND, wt.UINT, wt.WPARAM, wt.LPARAM]
-user32.SendMessageW.restype = ctypes.c_ssize_t
-user32.GetSystemMetrics.argtypes = [ctypes.c_int]
-user32.GetSystemMetrics.restype = ctypes.c_int
+    kernel32.CreateMutexW.argtypes = [wt.LPVOID, wt.BOOL, wt.LPCWSTR]
+    kernel32.CreateMutexW.restype = wt.HANDLE
+    kernel32.OpenMutexW.argtypes = [wt.DWORD, wt.BOOL, wt.LPCWSTR]
+    kernel32.OpenMutexW.restype = wt.HANDLE
+    kernel32.CloseHandle.argtypes = [wt.HANDLE]
+    kernel32.CloseHandle.restype = wt.BOOL
+    kernel32.OpenProcess.argtypes = [wt.DWORD, wt.BOOL, wt.DWORD]
+    kernel32.OpenProcess.restype = wt.HANDLE
+    kernel32.QueryFullProcessImageNameW.argtypes = [
+        wt.HANDLE,
+        wt.DWORD,
+        wt.LPWSTR,
+        ctypes.POINTER(wt.DWORD),
+    ]
+    kernel32.QueryFullProcessImageNameW.restype = wt.BOOL
 
-shell32.SetCurrentProcessExplicitAppUserModelID.argtypes = [wt.LPCWSTR]
-shell32.SetCurrentProcessExplicitAppUserModelID.restype = ctypes.c_long
+    user32.FindWindowW.argtypes = [wt.LPCWSTR, wt.LPCWSTR]
+    user32.FindWindowW.restype = wt.HWND
+    user32.EnumWindows.argtypes = [WNDENUMPROC, wt.LPARAM]
+    user32.EnumWindows.restype = wt.BOOL
+    user32.IsWindowVisible.argtypes = [wt.HWND]
+    user32.IsWindowVisible.restype = wt.BOOL
+    user32.GetWindowTextLengthW.argtypes = [wt.HWND]
+    user32.GetWindowTextLengthW.restype = ctypes.c_int
+    user32.GetWindowTextW.argtypes = [wt.HWND, wt.LPWSTR, ctypes.c_int]
+    user32.GetWindowTextW.restype = ctypes.c_int
+    user32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
+    user32.GetWindowThreadProcessId.restype = wt.DWORD
+    user32.ShowWindow.argtypes = [wt.HWND, ctypes.c_int]
+    user32.ShowWindow.restype = wt.BOOL
+    user32.SetForegroundWindow.argtypes = [wt.HWND]
+    user32.SetForegroundWindow.restype = wt.BOOL
+    user32.BringWindowToTop.argtypes = [wt.HWND]
+    user32.BringWindowToTop.restype = wt.BOOL
+    user32.LoadImageW.argtypes = [
+        wt.HINSTANCE,
+        wt.LPCWSTR,
+        wt.UINT,
+        ctypes.c_int,
+        ctypes.c_int,
+        wt.UINT,
+    ]
+    user32.LoadImageW.restype = wt.HICON
+    user32.DestroyIcon.argtypes = [wt.HICON]
+    user32.DestroyIcon.restype = wt.BOOL
+    user32.SendMessageW.argtypes = [wt.HWND, wt.UINT, wt.WPARAM, wt.LPARAM]
+    user32.SendMessageW.restype = ctypes.c_ssize_t
+    user32.GetSystemMetrics.argtypes = [ctypes.c_int]
+    user32.GetSystemMetrics.restype = ctypes.c_int
+
+    shell32.SetCurrentProcessExplicitAppUserModelID.argtypes = [wt.LPCWSTR]
+    shell32.SetCurrentProcessExplicitAppUserModelID.restype = ctypes.c_long
+
+else:
+    kernel32 = None  # type: ignore[assignment]
+    user32 = None  # type: ignore[assignment]
+    shell32 = None  # type: ignore[assignment]
 
 
 def is_app_running() -> bool:
+    if sys.platform != "win32" or kernel32 is None:
+        from mluvka import winproc_mac
+
+        return winproc_mac.is_instance_locked("app")
     h = kernel32.OpenMutexW(SYNCHRONIZE, False, APP_MUTEX_NAME)
     if h:
         kernel32.CloseHandle(h)
@@ -168,6 +186,10 @@ def is_app_running() -> bool:
 
 
 def is_window_running() -> bool:
+    if sys.platform != "win32" or kernel32 is None:
+        from mluvka import winproc_mac
+
+        return winproc_mac.is_instance_locked("okno")
     h = kernel32.OpenMutexW(SYNCHRONIZE, False, OKNO_MUTEX_NAME)
     if h:
         kernel32.CloseHandle(h)
@@ -194,6 +216,8 @@ def _window_process_name(hwnd: int) -> str:
 
 
 def find_existing_window(title: str = "Mluvka") -> int:
+    if sys.platform != "win32" or user32 is None:
+        return 0
     matches: list[int] = []
 
     def _cb(hwnd: int, _lparam: int) -> bool:
@@ -218,6 +242,13 @@ def find_existing_window(title: str = "Mluvka") -> int:
 
 
 def focus_existing_window(title: str = "Mluvka") -> bool:
+    if sys.platform == "darwin":
+        from mluvka import winproc_mac
+
+        pid = winproc_mac.read_instance_lock_pid("okno")
+        return winproc_mac.activate_pid(pid) if pid else False
+    if sys.platform != "win32" or user32 is None:
+        return False
     hwnd = 0
     for _ in range(20):
         hwnd = find_existing_window(title)
@@ -233,6 +264,13 @@ def focus_existing_window(title: str = "Mluvka") -> bool:
 
 
 def _pythonw_executable(data: Path | None = None) -> str:
+    if sys.platform != "win32":
+        if Path(sys.executable).is_file():
+            return sys.executable
+        venv_py = (data or config.data_dir()) / "venv" / "bin" / "python"
+        if venv_py.is_file():
+            return str(venv_py)
+        return sys.executable
     curr_pythonw = Path(sys.executable).with_name("pythonw.exe")
     if curr_pythonw.is_file():
         return str(curr_pythonw)
@@ -247,16 +285,19 @@ def launch_detached_module(module: str, *, data: Path | None = None) -> subproce
     env = dict(os.environ)
     if data is not None:
         env["MLUVKA_DATA"] = str(data)
-    return subprocess.Popen(
-        [exe, "-m", module],
-        cwd=str(config.repo_dir()),
-        env=env,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP,
-        close_fds=True,
-    )
+    kwargs: dict[str, Any] = {
+        "cwd": str(config.repo_dir()),
+        "env": env,
+        "stdin": subprocess.DEVNULL,
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.DEVNULL,
+        "close_fds": True,
+    }
+    if sys.platform == "win32":
+        kwargs["creationflags"] = DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+    else:
+        kwargs["start_new_session"] = True
+    return subprocess.Popen([exe, "-m", module], **kwargs)
 
 
 def launch_window(data: Path | None = None) -> None:
@@ -293,6 +334,19 @@ def _destroy_icons(handles: list[int]) -> None:
 
 
 def _system_is_dark() -> bool:
+    if sys.platform == "darwin":
+        try:
+            r = subprocess.run(
+                ["defaults", "read", "-g", "AppleInterfaceStyle"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            return r.returncode == 0 and r.stdout.strip().lower() == "dark"
+        except Exception:
+            return False
+    if sys.platform != "win32":
+        return False
     try:
         import winreg
 
@@ -354,7 +408,8 @@ def _validate_patch(patch: Any) -> dict[str, Any]:
     cleaned: dict[str, Any] = {}
     for key, val in patch.items():
         if key == "klavesa_vk":
-            if isinstance(val, bool) or not isinstance(val, int) or val not in ALLOWED_VK:
+            allowed_vks = ALLOWED_VK_MAC if sys.platform == "darwin" else ALLOWED_VK
+            if isinstance(val, bool) or not isinstance(val, int) or val not in allowed_vks:
                 raise ValueError("Neplatná klávesa pro diktát.")
             cleaned[key] = val
         elif key == "historie_dny":
@@ -455,6 +510,9 @@ def _build_state(state: _ApiState) -> dict[str, Any]:
         "allowed_hosts": hosts,
         "stats": history.stats(days=7, data=state.data),
         "version": mluvka.__version__,
+        "platform": sys.platform,
+        "sledovani_available": sledovani.is_available(),
+        "doladeni_available": doladeni.is_supported(),
     }
 
 
@@ -1306,7 +1364,7 @@ class Api:
             folder = resolved if resolved.is_dir() else resolved.parent
             if not any(folder.is_relative_to(r) for r in allowed_roots) or not folder.is_dir():
                 return {"ok": False, "error": "Cílová složka neexistuje nebo není povolená."}
-            os.startfile(str(folder))
+            _open_path(str(folder))
             return {"ok": True, "folder": str(folder)}
         except Exception as exc:
             log.exception("Chyba v otevrit_slozku")
@@ -1317,7 +1375,7 @@ class Api:
         try:
             target = state.data or config.data_dir()
             target.mkdir(parents=True, exist_ok=True)
-            os.startfile(str(target))
+            _open_path(str(target))
             return {"ok": True}
         except Exception as exc:
             log.exception("Chyba v open_data_folder")
@@ -1339,11 +1397,18 @@ class Api:
             target = str(url or "").strip()
             if target not in ALLOWED_OPEN_URLS:
                 return {"ok": False, "error": "Otevření tohoto odkazu není povoleno."}
-            os.startfile("https://console.anthropic.com")
+            _open_path("https://console.anthropic.com")
             return {"ok": True}
         except Exception as exc:
             log.exception("Chyba v open_url")
             return {"ok": False, "error": f"Otevření prohlížeče selhalo ({type(exc).__name__})."}
+
+
+def _open_path(target: str) -> None:
+    if sys.platform == "darwin":
+        subprocess.Popen(["open", target])
+    else:
+        os.startfile(target)
 
 
 def _is_allowed_local_navigation(uri: str, allowed_prefix: str, real_url: str) -> bool:
@@ -1373,6 +1438,8 @@ def _is_allowed_local_navigation(uri: str, allowed_prefix: str, real_url: str) -
 
 
 def _attach_navigation_guard(window: Any) -> None:
+    if sys.platform != "win32":
+        return
     native = getattr(window, "native", None)
     browser = getattr(native, "browser", None) if native is not None else None
     wv = getattr(browser, "webview", None) if browser is not None else None
@@ -1404,24 +1471,34 @@ def main(data: Path | None = None) -> int:
     initial_cfg = config.load_config(data)
     netguard.install(config.allowed_hosts(initial_cfg))
 
-    try:
-        shell32.SetCurrentProcessExplicitAppUserModelID(APP_USER_MODEL_ID)
-    except Exception:
-        pass
+    h_mutex: Any = None
+    lock_handle: Any = None
+    if sys.platform == "win32" and kernel32 is not None:
+        if shell32 is not None:
+            try:
+                shell32.SetCurrentProcessExplicitAppUserModelID(APP_USER_MODEL_ID)
+            except Exception:
+                pass
+        h_mutex = kernel32.CreateMutexW(None, False, OKNO_MUTEX_NAME)
+        if ctypes.get_last_error() == ERROR_ALREADY_EXISTS:
+            if h_mutex:
+                kernel32.CloseHandle(h_mutex)
+            focus_existing_window("Mluvka")
+            return 0
+    else:
+        from mluvka import winproc_mac
 
-    h_mutex = kernel32.CreateMutexW(None, False, OKNO_MUTEX_NAME)
-    if ctypes.get_last_error() == ERROR_ALREADY_EXISTS:
-        if h_mutex:
-            kernel32.CloseHandle(h_mutex)
-        focus_existing_window("Mluvka")
-        return 0
+        lock_handle = winproc_mac.acquire_instance_lock("okno", data=data)
+        if lock_handle is None:
+            focus_existing_window("Mluvka")
+            return 0
 
     icon_handles: list[int] = []
     icon_lock = threading.Lock()
     icons_closed = False
     api: Api | None = None
     try:
-        ico_file = zastupci.ensure_ico(data)
+        ico_file = zastupci.ensure_ico(data) if sys.platform == "win32" else None
         ui_index = Path(__file__).resolve().parent / "ui" / "index.html"
         bg = "#1C1420" if _system_is_dark() else "#F7F5F8"
 
@@ -1441,6 +1518,8 @@ def main(data: Path | None = None) -> int:
         assert window is not None
 
         def _sync_native_chrome() -> None:
+            if sys.platform != "win32" or user32 is None or ico_file is None:
+                return
             native = getattr(window, "native", None)
             hwnd = 0
             if native is not None:
@@ -1483,7 +1562,10 @@ def main(data: Path | None = None) -> int:
         window.events.shown += _on_shown
         window.events.closed += _on_closed
 
-        webview.start(private_mode=True, icon=str(ico_file))
+        if ico_file is not None:
+            webview.start(private_mode=True, icon=str(ico_file))
+        else:
+            webview.start(private_mode=True)
         return 0
     finally:
         if api is not None:
@@ -1491,8 +1573,12 @@ def main(data: Path | None = None) -> int:
         with icon_lock:
             icons_closed = True
             _destroy_icons(icon_handles)
-        if h_mutex:
+        if h_mutex and kernel32 is not None:
             kernel32.CloseHandle(h_mutex)
+        if lock_handle is not None:
+            from mluvka import winproc_mac
+
+            winproc_mac.release_instance_lock(lock_handle)
 
 
 if __name__ == "__main__":

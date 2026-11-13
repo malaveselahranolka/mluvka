@@ -5,7 +5,10 @@ from __future__ import annotations
 import ctypes
 import json
 import os
-import ctypes.wintypes as wt
+import sys
+
+if sys.platform == "win32":
+    import ctypes.wintypes as wt
 import threading
 import time
 import uuid

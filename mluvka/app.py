@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import ctypes
-import ctypes.wintypes as wt
 import logging
 import os
 import queue
+import sys
 import threading
+
+if sys.platform == "win32":
+    import ctypes.wintypes as wt
 import time
 import uuid
 from logging.handlers import RotatingFileHandler
@@ -20,31 +23,39 @@ from mluvka import (
     channel,
     config,
     history,
-    hotkey,
     llm,
     netguard,
     okno,
-    output,
     overlay,
     pamet,
     sledovani,
     text,
     tray,
     trenink,
-    winproc,
 )
+
+if sys.platform == "darwin":
+    from mluvka import hotkey_mac as hotkey
+    from mluvka import output_mac as output
+    from mluvka import winproc_mac as winproc
+else:
+    from mluvka import hotkey, output, winproc
 
 log = logging.getLogger("mluvka.app")
 
-kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-user32 = ctypes.WinDLL("user32", use_last_error=True)
+if sys.platform == "win32":
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
 
-kernel32.CreateMutexW.argtypes = [wt.LPVOID, wt.BOOL, wt.LPCWSTR]
-kernel32.CreateMutexW.restype = wt.HANDLE
-kernel32.CloseHandle.argtypes = [wt.HANDLE]
-kernel32.CloseHandle.restype = wt.BOOL
-user32.MessageBoxW.argtypes = [wt.HWND, wt.LPCWSTR, wt.LPCWSTR, wt.UINT]
-user32.MessageBoxW.restype = ctypes.c_int
+    kernel32.CreateMutexW.argtypes = [wt.LPVOID, wt.BOOL, wt.LPCWSTR]
+    kernel32.CreateMutexW.restype = wt.HANDLE
+    kernel32.CloseHandle.argtypes = [wt.HANDLE]
+    kernel32.CloseHandle.restype = wt.BOOL
+    user32.MessageBoxW.argtypes = [wt.HWND, wt.LPCWSTR, wt.LPCWSTR, wt.UINT]
+    user32.MessageBoxW.restype = ctypes.c_int
+else:
+    kernel32 = None  # type: ignore[assignment]
+    user32 = None  # type: ignore[assignment]
 
 ERROR_ALREADY_EXISTS = 183
 MB_ICONINFORMATION = 0x00000040
@@ -99,7 +110,7 @@ class MluvkaApp:
         self._pending_model_path: Path | None = None
         self._reloading_model = False
 
-        self._overlay = overlay.Overlay()
+        self._overlay = overlay.OverlaySubprocessClient() if sys.platform == "darwin" else overlay.Overlay()
         self._whisper = asr.WhisperServer(data, model_path=self._active_model_path)
         self._ai = llm.ClaudeAI(data)
         self._recorder = audio.Recorder()
@@ -107,11 +118,21 @@ class MluvkaApp:
         self._sledovac = sledovani.Sledovac()
 
         self._work_queue: queue.Queue[tuple[str, Any] | None] = queue.Queue()
-        self._hook = hotkey.GlobalHotkeyHook(
-            on_action=self._on_hotkey_action,
-            klavesa_vk=int(self._cfg_store.get("klavesa_vk", hotkey.VK_RCONTROL)),
-            paused=False,
-        )
+        default_vk = getattr(hotkey, "VK_MAC_FN", hotkey.VK_RCONTROL) if sys.platform == "darwin" else hotkey.VK_RCONTROL
+        klavesa_vk = int(self._cfg_store.get("klavesa_vk", default_vk))
+        if sys.platform == "darwin":
+            self._hook = hotkey.GlobalHotkeyHook(
+                on_action=self._on_hotkey_action,
+                klavesa_vk=klavesa_vk,
+                paused=False,
+                on_error=self._on_hotkey_error,
+            )
+        else:
+            self._hook = hotkey.GlobalHotkeyHook(
+                on_action=self._on_hotkey_action,
+                klavesa_vk=klavesa_vk,
+                paused=False,
+            )
         self._tray = tray.TrayController(
             get_cfg=self._cfg_store.snapshot,
             is_ready=lambda: self._model_loaded,
@@ -175,10 +196,11 @@ class MluvkaApp:
         if self._cfg_store.reload_if_changed():
             cfg = self._cfg_store.snapshot()
             netguard.set_allowed_hosts(config.allowed_hosts(cfg))
+            default_vk = getattr(hotkey, "VK_MAC_FN", hotkey.VK_RCONTROL) if sys.platform == "darwin" else hotkey.VK_RCONTROL
             try:
-                vk = int(cfg.get("klavesa_vk", hotkey.VK_RCONTROL))
+                vk = int(cfg.get("klavesa_vk", default_vk))
             except (TypeError, ValueError):
-                vk = hotkey.VK_RCONTROL
+                vk = default_vk
             self._hook.set_klavesa_vk(vk)
             target_model = self._resolve_model_path(cfg)
             with self._state_lock:
@@ -379,11 +401,18 @@ class MluvkaApp:
                     self._tray.set_state(self._idle_tray_state())
                 else:
                     self._tray.refresh_menu()
-                if not recording and transcribing == 0:
-                    self._overlay.toast(
-                        "Mluvka je připravená. Drž pravý Ctrl a mluv.",
-                        kind="info",
-                    )
+                if not recording and transcribing == 0 and not getattr(self._hook, "_permission_denied", False):
+                    if sys.platform == "darwin":
+                        mac_names = {255: "Fn", 165: "pravý Option", 92: "pravý Command", 163: "pravý Ctrl"}
+                        try:
+                            vk = int(self._cfg_store.get("klavesa_vk", 255))
+                        except (TypeError, ValueError):
+                            vk = 255
+                        lbl = mac_names.get(vk, "Fn")
+                        ready_msg = f"Mluvka je připravená. Drž {lbl} a mluv."
+                    else:
+                        ready_msg = "Mluvka je připravená. Drž pravý Ctrl a mluv."
+                    self._overlay.toast(ready_msg, kind="info")
             log.info("whisper-server připraven na portu %d", self._whisper.port)
         except Exception as exc:
             self._whisper_error = exc
@@ -550,9 +579,10 @@ class MluvkaApp:
         if not txt:
             return
         if from_tray:
-            # Kliknutím do lišty získá popředí skryté okno pystray, Ctrl+V by šlo do prázdna.
+            # Kliknutím do lišty získá popředí skryté okno pystray, Ctrl/Cmd+V by šlo do prázdna.
             output.set_clipboard_text(txt)
-            self._overlay.toast("Poslední přepis je ve schránce, vlož ho Ctrl+V", kind="info")
+            shortcut_lbl = "Cmd+V" if sys.platform == "darwin" else "Ctrl+V"
+            self._overlay.toast(f"Poslední přepis je ve schránce, vlož ho {shortcut_lbl}", kind="info")
             return
         if not output.paste_text(txt):
             self._overlay.toast("Vložení se nepovedlo, text je ve schránce", kind="error")
@@ -830,10 +860,16 @@ class MluvkaApp:
             log.exception("Chyba při kontrole změny konfigurace")
         self._config_poll_after_id = self._overlay.root.after(2000, self._poll_config_timer)
 
+    def _on_hotkey_error(self, msg: str) -> None:
+        log.warning("Globální zkratka: %s", msg)
+        self._overlay.toast(msg, kind="error")
+
     def _request_quit(self) -> None:
         self._overlay.quit()
+        if sys.platform == "darwin":
+            self._tray.stop()
 
-    def run(self) -> None:
+    def _prepare_startup(self) -> None:
         audio.ensure_sounds(self._data)
         try:
             dny = int(self._cfg_store.get("historie_dny", 30))
@@ -844,6 +880,66 @@ class MluvkaApp:
             history.prune_history(dny, data=self._data)
         except Exception:
             log.exception("Chyba při promazávání staré historie při startu")
+
+    def _shutdown(self, worker: threading.Thread, *, extra_threads: tuple[threading.Thread, ...] = ()) -> None:
+        with self._state_lock:
+            self._stopping = True
+            streamer = self._streamer
+            self._streamer = None
+        if streamer is not None:
+            streamer.cancel(wait=False)
+        self._hook.stop()
+        self._sledovac.stop()
+        self._recorder.cancel()
+        self._whisper.close()
+        if streamer is not None:
+            streamer.cancel(wait=True)
+        self._ai.close()
+        self._work_queue.put(None)
+        worker.join(timeout=2.0)
+        for th in extra_threads:
+            th.join(timeout=2.0)
+        self._tray.stop()
+
+    def _poll_config_loop(self, stop_event: threading.Event) -> None:
+        while not stop_event.wait(2.0):
+            with self._state_lock:
+                if self._stopping:
+                    return
+            try:
+                self._refresh_config()
+                self._maybe_schedule_model_reload()
+            except Exception:
+                log.exception("Chyba při kontrole změny konfigurace")
+
+    def _run_macos(self) -> None:
+        loader = threading.Thread(target=self._load_whisper_bg, name="mluvka-loader", daemon=True)
+        worker = threading.Thread(target=self._worker_loop, name="mluvka-worker", daemon=True)
+        stop_poll = threading.Event()
+        poll_thread = threading.Thread(
+            target=self._poll_config_loop, args=(stop_poll,), name="mluvka-cfg-poll", daemon=True
+        )
+
+        def _on_tray_ready() -> None:
+            if hasattr(self._overlay, "start"):
+                self._overlay.start()
+            self._hook.start()
+            loader.start()
+            worker.start()
+            poll_thread.start()
+
+        try:
+            self._tray.run(setup=_on_tray_ready)
+        finally:
+            stop_poll.set()
+            self._overlay.quit()
+            self._shutdown(worker, extra_threads=(poll_thread,))
+
+    def run(self) -> None:
+        self._prepare_startup()
+        if sys.platform == "darwin":
+            self._run_macos()
+            return
 
         loader = threading.Thread(target=self._load_whisper_bg, name="mluvka-loader", daemon=True)
         worker = threading.Thread(target=self._worker_loop, name="mluvka-worker", daemon=True)
@@ -856,26 +952,32 @@ class MluvkaApp:
         try:
             self._overlay.run()
         finally:
-            with self._state_lock:
-                self._stopping = True
-                streamer = self._streamer
-                self._streamer = None
-            if streamer is not None:
-                streamer.cancel(wait=False)
-            self._hook.stop()
-            self._sledovac.stop()
-            self._recorder.cancel()
-            self._whisper.close()
-            if streamer is not None:
-                streamer.cancel(wait=True)
-            self._ai.close()
-            self._work_queue.put(None)
-            worker.join(timeout=2.0)
-            self._tray.stop()
+            self._shutdown(worker)
+
+
+def _run_app_session(data: Path | None, *, open_window: bool) -> int:
+    setup_logging(data)
+    cfg_store = config.ConfigStore(data)
+    netguard.install(config.allowed_hosts(cfg_store.snapshot()))
+    app = MluvkaApp(cfg_store, data=data)
+    if open_window:
+        okno.launch_window(data)
+    app.run()
+    return 0
 
 
 def run(data: Path | None = None, *, open_window: bool = False) -> int:
     overlay.enable_dpi_awareness()
+    if sys.platform != "win32" or kernel32 is None:
+        lock_handle = winproc.acquire_instance_lock("app", data=data)
+        if lock_handle is None:
+            okno.launch_window(data)
+            return 0
+        try:
+            return _run_app_session(data, open_window=open_window)
+        finally:
+            winproc.release_instance_lock(lock_handle)
+
     h_mutex = kernel32.CreateMutexW(None, False, "Local\\Mluvka")
     if ctypes.get_last_error() == ERROR_ALREADY_EXISTS:
         if h_mutex:
@@ -884,14 +986,7 @@ def run(data: Path | None = None, *, open_window: bool = False) -> int:
         return 0
 
     try:
-        setup_logging(data)
-        cfg_store = config.ConfigStore(data)
-        netguard.install(config.allowed_hosts(cfg_store.snapshot()))
-        app = MluvkaApp(cfg_store, data=data)
-        if open_window:
-            okno.launch_window(data)
-        app.run()
-        return 0
+        return _run_app_session(data, open_window=open_window)
     finally:
         if h_mutex:
             kernel32.CloseHandle(h_mutex)

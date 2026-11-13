@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import ctypes
-import ctypes.wintypes as wt
+import sys
+
+if sys.platform == "win32":
+    import ctypes.wintypes as wt
 import os
 import subprocess
-import sys
 import threading
 from pathlib import Path
 
@@ -38,12 +40,17 @@ _CREATE_SHORTCUTS_PS = (
     "}\n"
 )
 
-shell32 = ctypes.WinDLL("shell32", use_last_error=True)
-shell32.SHGetFolderPathW.argtypes = [wt.HWND, ctypes.c_int, wt.HANDLE, wt.DWORD, wt.LPWSTR]
-shell32.SHGetFolderPathW.restype = ctypes.c_long
+if sys.platform == "win32":
+    shell32 = ctypes.WinDLL("shell32", use_last_error=True)
+    shell32.SHGetFolderPathW.argtypes = [wt.HWND, ctypes.c_int, wt.HANDLE, wt.DWORD, wt.LPWSTR]
+    shell32.SHGetFolderPathW.restype = ctypes.c_long
+else:
+    shell32 = None  # type: ignore[assignment]
 
 
 def _folder_path(csidl: int, fallback: Path) -> Path:
+    if sys.platform != "win32" or shell32 is None:
+        return fallback
     buf = ctypes.create_unicode_buffer(wt.MAX_PATH)
     try:
         if shell32.SHGetFolderPathW(None, csidl, None, 0, buf) == 0 and buf.value:
@@ -58,6 +65,8 @@ def desktop_dir() -> Path:
 
 
 def programs_dir() -> Path:
+    if sys.platform != "win32":
+        return Path.home() / "Applications"
     appdata = os.environ.get("APPDATA", "").strip()
     fb = (
         Path(appdata) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
@@ -127,6 +136,9 @@ def create_shortcuts(
     programs: Path | None = None,
 ) -> tuple[Path, Path, Path]:
     d = data or config.data_dir()
+    if sys.platform != "win32":
+        desktop_lnk, programs_lnk = shortcut_paths(desktop, programs)
+        return desktop_lnk, programs_lnk, ico_path(d)
     r = repo or config.repo_dir()
     icon_file = ensure_ico(d)
     desktop_lnk, programs_lnk = shortcut_paths(desktop, programs)
@@ -157,6 +169,8 @@ def remove_shortcuts(
     desktop: Path | None = None,
     programs: Path | None = None,
 ) -> list[Path]:
+    if sys.platform != "win32":
+        return []
     desktop_lnk, programs_lnk = shortcut_paths(desktop, programs)
     removed: list[Path] = []
     for path in (desktop_lnk, programs_lnk):
@@ -175,6 +189,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--odebrat", action="store_true", help="Odebere oba zástupce")
     args = parser.parse_args(argv)
+
+    if sys.platform != "win32":
+        print("Zástupce na této platformě spravuje instalátor.")
+        return 0
 
     if args.odebrat:
         desktop_lnk, programs_lnk = shortcut_paths()

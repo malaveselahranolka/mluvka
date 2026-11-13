@@ -6,7 +6,16 @@
     161: { keycap: "Pravý Shift", headline: "Drž pravý Shift a mluv", cmdHint: "Levý Shift + pravý Shift = příkaz pro Claude" },
     20: { keycap: "Caps Lock", headline: "Drž Caps Lock a mluv", cmdHint: "Shift + Caps Lock = příkaz pro Claude" },
     120: { keycap: "F9", headline: "Drž F9 a mluv", cmdHint: "Shift + F9 = příkaz pro Claude" },
+    255: { keycap: "Fn / 🌐", headline: "Drž Fn a mluv", cmdHint: "Shift + Fn = příkaz pro Claude" },
+    165: { keycap: "Pravý Option", headline: "Drž pravý Option a mluv", cmdHint: "Shift + pravý Option = příkaz pro Claude" },
+    92: { keycap: "Pravý Command", headline: "Drž pravý Command a mluv", cmdHint: "Shift + pravý Command = příkaz pro Claude" },
   };
+  const MAC_VK_OPTIONS = [
+    [255, "Fn / 🌐"],
+    [165, "Pravý Option"],
+    [92, "Pravý Command"],
+    [163, "Pravý Ctrl"],
+  ];
   const CZECH_DAYS = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
   const BAR_WEIGHTS = [0.35, 0.50, 0.70, 0.88, 1.00, 0.88, 0.70, 0.50, 0.35];
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -465,14 +474,23 @@
     wpmEl.append(document.createTextNode(`${formatInt(Math.round(st.wpm || 0))} `), mk("span", "stat-unit", "slov/min"));
   }
 
+  function emptyDictateMessage() {
+    const plat = state.data && state.data.platform;
+    if (plat !== "darwin") return "Zatím žádné diktáty. Drž pravý Ctrl a mluv.";
+    const vk = Number(((state.data && state.data.config) || {}).klavesa_vk || 255);
+    const meta = VK_META[vk] || VK_META[255];
+    return `Zatím žádné diktáty. ${meta.headline}.`;
+  }
+
   function renderRecent() {
-    const sig = JSON.stringify(state.recentItems);
+    const emptyMsg = state.recentItems.length ? "" : emptyDictateMessage();
+    const sig = JSON.stringify({ items: state.recentItems, empty: emptyMsg });
     if (sig === state.lastRecentJson) return;
     state.lastRecentJson = sig;
     const wrap = $("recent-list");
     wrap.textContent = "";
     if (!state.recentItems.length) {
-      wrap.appendChild(mk("div", "empty-state", "Zatím žádné diktáty. Drž pravý Ctrl a mluv."));
+      wrap.appendChild(mk("div", "empty-state", emptyMsg));
       return;
     }
     state.recentItems.forEach((item) => wrap.appendChild(makeHistoryRow(item)));
@@ -487,7 +505,7 @@
       const card = mk("div", "card");
       card.appendChild(mk("div", "empty-state flush", state.historyQuery
         ? "Žádný diktát neodpovídá hledání."
-        : "Zatím žádné diktáty. Drž pravý Ctrl a mluv."));
+        : emptyDictateMessage()));
       container.appendChild(card);
       return;
     }
@@ -768,7 +786,19 @@
   function renderSettings() {
     if (!state.data) return;
     const cfg = state.data.config || {};
-    $("sel-vk").value = String(cfg.klavesa_vk || 163);
+    const isMac = state.data.platform === "darwin";
+    const selVk = $("sel-vk");
+    if (isMac && selVk.dataset.macInit !== "1") {
+      selVk.dataset.macInit = "1";
+      selVk.textContent = "";
+      for (const [vkVal, label] of MAC_VK_OPTIONS) {
+        const opt = document.createElement("option");
+        opt.value = String(vkVal);
+        opt.textContent = label;
+        selVk.appendChild(opt);
+      }
+    }
+    selVk.value = String(cfg.klavesa_vk || (isMac ? 255 : 163));
 
     const rawDevices = Array.isArray(state.data.devices) ? state.data.devices : [];
     const curMic = cfg.mikrofon == null ? "" : String(cfg.mikrofon);
@@ -801,7 +831,18 @@
     }
 
     setSwitchState($("toggle-sounds"), Boolean(cfg.zvuky));
-    setSwitchState($("toggle-learn-edits"), cfg.uceni_z_oprav !== false);
+    const learnBtn = $("toggle-learn-edits");
+    const sledAvail = state.data.sledovani_available !== false;
+    learnBtn.disabled = !sledAvail;
+    setSwitchState(learnBtn, sledAvail ? (cfg.uceni_z_oprav !== false) : false);
+    const descLearn = $("desc-learn-edits");
+    if (descLearn && !sledAvail) {
+      descLearn.textContent = "Učení oprav v jiných aplikacích je na macOS zatím nedostupné.";
+    }
+    const descAuto = $("desc-autostart");
+    if (descAuto && isMac) {
+      descAuto.textContent = "Automaticky spustí Mluvku na pozadí po přihlášení do macOS.";
+    }
     setSwitchState($("toggle-autostart"), Boolean(cfg.autostart));
 
     const srvHook = String(cfg.kanal_webhook || "");
@@ -1447,6 +1488,15 @@
     const d = state.doladeni;
     const stav = (d && d.stav) ? String(d.stav) : "nic";
 
+    if (stav === "nepodporovano" || (state.data && state.data.doladeni_available === false)) {
+      idleBox.hidden = false;
+      $("doladeni-idle-text").textContent = (d && d.chyba) || "Doladění modelu je zatím jen pro Windows s NVIDIA GPU";
+      $("doladeni-start-btn").disabled = true;
+      $("doladeni-start-btn").hidden = true;
+      return;
+    }
+
+    $("doladeni-start-btn").hidden = false;
     if (stav === "nic") {
       idleBox.hidden = false;
       const nahrano = Number(d ? d.nahrano : (state.trenink ? state.trenink.recorded_count : 0)) || 0;

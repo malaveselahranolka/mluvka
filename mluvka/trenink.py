@@ -6,6 +6,8 @@ import json
 import math
 import os
 import re
+import subprocess
+import sys
 import threading
 import time
 import wave
@@ -19,6 +21,8 @@ from mluvka import asr, config, wer
 
 SENTENCES_PATH = Path(__file__).resolve().with_name("trenink_vety.txt")
 _TRENINK_LOCK = threading.Lock()
+_PLAY_LOCK = threading.Lock()
+_PLAY_PROC: subprocess.Popen[bytes] | None = None
 
 
 def sentence_code(index: int) -> str:
@@ -189,6 +193,20 @@ def save_dictation_wav(
 def play_wav(wav_path: Path) -> bool:
     if not wav_path.is_file():
         return False
+    if sys.platform == "darwin":
+        stop_playback()
+        proc = subprocess.Popen(
+            ["afplay", str(wav_path)],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        with _PLAY_LOCK:
+            global _PLAY_PROC
+            _PLAY_PROC = proc
+        return True
+    if sys.platform != "win32":
+        return False
     import winsound
 
     winsound.PlaySound(None, winsound.SND_PURGE)
@@ -201,6 +219,19 @@ def play_sentence(index: int, *, data: Path | None = None) -> bool:
 
 
 def stop_playback() -> None:
+    if sys.platform == "darwin":
+        with _PLAY_LOCK:
+            global _PLAY_PROC
+            proc = _PLAY_PROC
+            _PLAY_PROC = None
+        if proc is not None and proc.poll() is None:
+            try:
+                proc.terminate()
+            except Exception:
+                pass
+        return
+    if sys.platform != "win32":
+        return
     try:
         import winsound
 

@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import ctypes
-import ctypes.wintypes as wt
 import logging
 import os
+import plistlib
 import subprocess
+import sys
+
+if sys.platform == "win32":
+    import ctypes.wintypes as wt
 from pathlib import Path
 from typing import Callable
 
@@ -28,9 +32,12 @@ _BAR_RADIUS_64 = 5
 CSIDL_STARTUP = 7
 log = logging.getLogger("mluvka.tray")
 
-shell32 = ctypes.WinDLL("shell32", use_last_error=True)
-shell32.SHGetFolderPathW.argtypes = [wt.HWND, ctypes.c_int, wt.HANDLE, wt.DWORD, wt.LPWSTR]
-shell32.SHGetFolderPathW.restype = ctypes.c_long
+if sys.platform == "win32":
+    shell32 = ctypes.WinDLL("shell32", use_last_error=True)
+    shell32.SHGetFolderPathW.argtypes = [wt.HWND, ctypes.c_int, wt.HANDLE, wt.DWORD, wt.LPWSTR]
+    shell32.SHGetFolderPathW.restype = ctypes.c_long
+else:
+    shell32 = None  # type: ignore[assignment]
 
 
 def kresli_ikonu(stav: str) -> Image.Image:
@@ -78,6 +85,10 @@ def kresli_ikonu(stav: str) -> Image.Image:
 
 
 def startup_folder() -> Path:
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "LaunchAgents"
+    if sys.platform != "win32" or shell32 is None:
+        return Path.home() / ".config" / "autostart"
     buf = ctypes.create_unicode_buffer(wt.MAX_PATH)
     try:
         if shell32.SHGetFolderPathW(None, CSIDL_STARTUP, None, 0, buf) == 0 and buf.value:
@@ -91,6 +102,8 @@ def startup_folder() -> Path:
 
 
 def startup_cmd_path(folder: Path | None = None) -> Path:
+    if sys.platform == "darwin":
+        return (folder or startup_folder()) / "cz.mluvka.plist"
     return (folder or startup_folder()) / "Mluvka.cmd"
 
 
@@ -102,6 +115,29 @@ def set_autostart(
     repo: Path | None = None,
 ) -> Path:
     cmd_path = startup_cmd_path(startup_dir)
+    if sys.platform == "darwin":
+        if enabled:
+            cmd_path.parent.mkdir(parents=True, exist_ok=True)
+            d = data or config.data_dir()
+            r = repo or config.repo_dir()
+            py_bin = d / "venv" / "bin" / "python"
+            env_vars: dict[str, str] = {
+                "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+            }
+            if data is not None or os.environ.get("MLUVKA_DATA", "").strip():
+                env_vars["MLUVKA_DATA"] = str(d)
+            plist_obj: dict[str, object] = {
+                "Label": "cz.mluvka",
+                "ProgramArguments": [str(py_bin), "-m", "mluvka"],
+                "WorkingDirectory": str(r),
+                "RunAtLoad": True,
+                "EnvironmentVariables": env_vars,
+            }
+            cmd_path.write_bytes(plistlib.dumps(plist_obj))
+        else:
+            if cmd_path.exists():
+                cmd_path.unlink()
+        return cmd_path
     if enabled:
         cmd_path.parent.mkdir(parents=True, exist_ok=True)
         d = data or config.data_dir()
@@ -259,9 +295,7 @@ class TrayController:
             ),
             pystray.MenuItem(
                 "Upravit nastavení…",
-                lambda icon, item: subprocess.Popen(
-                    ["notepad.exe", str(config.config_path(self._data))]
-                ),
+                lambda icon, item: self._edit_config(),
             ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Ukončit", lambda icon, item: self._on_quit()),
@@ -269,6 +303,24 @@ class TrayController:
 
     def start(self) -> None:
         self._icon.run_detached()
+
+    def run(self, setup: Callable[[], None] | None = None) -> None:
+        """Spustí blokující smyčku pystray v hlavním vlákně (vyžadováno na macOS)."""
+        if setup is not None:
+            def _setup(icon) -> None:
+                icon.visible = True
+                setup()
+
+            self._icon.run(setup=_setup)
+        else:
+            self._icon.run()
+
+    def _edit_config(self) -> None:
+        cfg_file = str(config.config_path(self._data))
+        if sys.platform == "darwin":
+            subprocess.Popen(["open", "-t", cfg_file])
+        else:
+            subprocess.Popen(["notepad.exe", cfg_file])
 
     def set_state(self, stav: str) -> None:
         if stav in self._icons and stav != self._state:
@@ -287,6 +339,12 @@ class TrayController:
 
     def _open_history(self) -> None:
         md_path = history.export_markdown(data=self._data)
+        if sys.platform == "darwin":
+            try:
+                subprocess.Popen(["open", str(md_path)])
+            except Exception as exc:
+                log.warning("Nepodařilo se otevřít historii: %s", exc)
+            return
         try:
             os.startfile(str(md_path))
         except OSError as exc:

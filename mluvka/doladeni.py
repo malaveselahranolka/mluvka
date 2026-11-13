@@ -19,6 +19,7 @@ from trenink import spolecne
 POTREBA_VET = 50
 ERR_NEOČEKAVANE = "Doladění neočekávaně skončilo."
 ERR_SOUBOR_STAVU = "Stav doladění nelze ověřit (poškozený nebo zamčený soubor)."
+MSG_MAC_NEPODPOROVANO = "Doladění modelu je zatím jen pro Windows s NVIDIA GPU"
 
 _DOLADENI_LOCK = threading.RLock()
 _KERNEL32: Any = None
@@ -56,7 +57,16 @@ def _default_run_name(now: datetime | None = None) -> str:
     return f"osobni-{dt.strftime('%Y%m%d-%H%M')}"
 
 
+def is_supported() -> bool:
+    return sys.platform == "win32"
+
+
 def _resolve_app_python(data_root: Path) -> Path:
+    if sys.platform != "win32":
+        venv_py = data_root / "venv" / "bin" / "python"
+        if venv_py.is_file():
+            return venv_py
+        return Path(sys.executable)
     venv_py = data_root / "venv" / "Scripts" / "python.exe"
     if venv_py.is_file():
         return venv_py
@@ -157,6 +167,15 @@ def doladeni_stav(
 ) -> dict[str, Any]:
     """Vrátí stav ze `stav.json`, nebo vypočtený klidový stav `nic`."""
     data_root = spolecne.data_dir(data)
+    if not is_supported():
+        return {
+            "stav": "nepodporovano",
+            "dostupne": False,
+            "chyba": MSG_MAC_NEPODPOROVANO,
+            "nahrano": len(trenink.load_tsv(data_root)),
+            "potreba": POTREBA_VET,
+            "odhad_min": 0,
+        }
     stav_path = spolecne.doladeni_stav_path(data_root)
     alive_check = pid_alive_fn or is_process_alive
 
@@ -227,6 +246,8 @@ def doladeni_spustit(
     max_steps: int | None = None,
 ) -> dict[str, Any]:
     """Spustí orchestrátor `doladit_vse.py` jako oddělený proces a zapíše úvodní `stav.json`."""
+    if not is_supported():
+        return {"ok": False, "error": MSG_MAC_NEPODPOROVANO}
     data_root = spolecne.data_dir(data)
     stav_path = spolecne.doladeni_stav_path(data_root)
     popen = popen_fn or subprocess.Popen
@@ -323,6 +344,8 @@ def doladeni_zastavit(
 ) -> dict[str, Any]:
     """Ukončí běžící strom procesů doladění přes `taskkill /PID <pid> /T /F` a zapíše `stav=zastaveno`."""
     data_root = spolecne.data_dir(data)
+    if not is_supported():
+        return {"ok": True, **doladeni_stav(data_root)}
     stav_path = spolecne.doladeni_stav_path(data_root)
     runner = run_fn or subprocess.run
     alive_check = pid_alive_fn or is_process_alive
@@ -396,6 +419,8 @@ def doladeni_pouzit(
     cfg_store: config.ConfigStore | None = None,
 ) -> dict[str, Any]:
     """Aktivuje doladěný model, pouze pokud je `vysledek.lepsi` a soubor existuje v DATA/models."""
+    if not is_supported():
+        return {"ok": False, "error": MSG_MAC_NEPODPOROVANO}
     data_root = spolecne.data_dir(data)
     with _DOLADENI_LOCK:
         state = doladeni_stav(data_root)

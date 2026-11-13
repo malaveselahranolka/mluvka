@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import ctypes
-import ctypes.wintypes as wt
 import difflib
 import logging
+import sys
 import threading
+
+if sys.platform == "win32":
+    import ctypes.wintypes as wt
 import time
 import unicodedata
 from typing import Any, Callable, Protocol
@@ -44,19 +47,62 @@ class FocusReader(Protocol):
     def read_text(self, elem: Any) -> str | None: ...
 
 
+def is_available() -> bool:
+    return sys.platform == "win32"
+
+
+def status() -> str:
+    return "dostupné" if is_available() else "nedostupné"
+
+
+class UnavailableReader:
+    """Náhradní čtečka pro platformy bez podpory (např. macOS)."""
+
+    available = False
+
+    def status(self) -> str:
+        return "nedostupné"
+
+    def init_thread(self) -> None:
+        return None
+
+    def close_thread(self) -> None:
+        return None
+
+    def get_foreground_hwnd(self) -> int:
+        return 0
+
+    def get_focused(self) -> Any | None:
+        return None
+
+    def is_password(self, elem: Any) -> bool:
+        return False
+
+    def read_text(self, elem: Any) -> str | None:
+        return None
+
+
 class UiaReader:
     """Čtení fokusovaného textového pole přes Windows UI Automation (comtypes)."""
 
     def __init__(self) -> None:
-        self._user32 = ctypes.WinDLL("user32", use_last_error=True)
-        self._user32.GetForegroundWindow.argtypes = []
-        self._user32.GetForegroundWindow.restype = wt.HWND
+        if sys.platform == "win32":
+            self._user32: Any = ctypes.WinDLL("user32", use_last_error=True)
+            self._user32.GetForegroundWindow.argtypes = []
+            self._user32.GetForegroundWindow.restype = wt.HWND
+        else:
+            self._user32 = None
         self._uia: Any = None
         self._uia_mod: Any = None
         self._com_initialized = False
 
+    def status(self) -> str:
+        return "dostupné" if sys.platform == "win32" else "nedostupné"
+
     def init_thread(self) -> None:
         """Inicializuje COM v aktuálním pracovním vlákně a načte UIAutomation."""
+        if sys.platform != "win32":
+            return
         import comtypes
         import comtypes.client
 
@@ -344,7 +390,12 @@ class Sledovac:
         poll_interval_s: float = POLL_INTERVAL_S,
         max_duration_s: float = MAX_DURATION_S,
     ) -> None:
-        self._reader_factory = reader_factory or UiaReader
+        if reader_factory is not None:
+            self._reader_factory = reader_factory
+        elif sys.platform == "win32":
+            self._reader_factory = UiaReader
+        else:
+            self._reader_factory = UnavailableReader
         self._initial_delay_s = max(0.0, float(initial_delay_s))
         self._baseline_retries = max(1, int(baseline_retries))
         self._baseline_retry_interval_s = max(0.0, float(baseline_retry_interval_s))
@@ -356,6 +407,12 @@ class Sledovac:
         self._thread: threading.Thread | None = None
         self._gen = 0
 
+    def is_available(self) -> bool:
+        return self._reader_factory is not UnavailableReader
+
+    def status(self) -> str:
+        return "dostupné" if self.is_available() else "nedostupné"
+
     def start(
         self,
         vlozeno: str,
@@ -363,6 +420,9 @@ class Sledovac:
         on_learned: LearnedCallback,
     ) -> None:
         """Spustí sledování pro nově vložený text; případné běžící sledování okamžitě zruší."""
+        if self._reader_factory is UnavailableReader:
+            self.stop()
+            return
         if not str(vlozeno or "").strip():
             self.stop()
             return

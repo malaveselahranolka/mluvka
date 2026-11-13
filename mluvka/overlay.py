@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import argparse
 import ctypes
-import ctypes.wintypes as wt
+import json
 import logging
 import math
 import queue
 import struct
+import subprocess
 import sys
 import threading
 import time
@@ -54,103 +55,114 @@ STATE_LABELS = {
 }
 BAR_WEIGHTS = (0.35, 0.50, 0.70, 0.88, 1.00, 0.88, 0.70, 0.50, 0.35)
 
-user32 = ctypes.WinDLL("user32", use_last_error=True)
-gdi32 = ctypes.WinDLL("gdi32", use_last_error=True)
-try:
-    shcore = ctypes.WinDLL("shcore", use_last_error=True)
-except Exception:
+if sys.platform == "win32":
+    import ctypes.wintypes as wt
+
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    gdi32 = ctypes.WinDLL("gdi32", use_last_error=True)
+    try:
+        shcore = ctypes.WinDLL("shcore", use_last_error=True)
+    except Exception:
+        shcore = None
+    try:
+        dwmapi = ctypes.WinDLL("dwmapi", use_last_error=True)
+    except Exception:
+        dwmapi = None
+
+    GWL_EXSTYLE = -20
+    WS_EX_LAYERED = 0x00080000
+    WS_EX_TRANSPARENT = 0x00000020
+    WS_EX_TOOLWINDOW = 0x00000080
+    WS_EX_NOACTIVATE = 0x08000000
+    WS_EX_APPWINDOW = 0x00040000
+
+    SWP_NOSIZE = 0x0001
+    SWP_NOMOVE = 0x0002
+    SWP_NOZORDER = 0x0004
+    SWP_NOACTIVATE = 0x0010
+    SWP_FRAMECHANGED = 0x0020
+
+    MONITOR_DEFAULTTONEAREST = 2
+    SPI_GETCLIENTAREAANIMATION = 0x1042
+    DWMWA_WINDOW_CORNER_PREFERENCE = 33
+    DWMWA_BORDER_COLOR = 34
+    DWMWCP_ROUND = 2
+
+
+    class MONITORINFO(ctypes.Structure):
+        _fields_ = [
+            ("cbSize", wt.DWORD),
+            ("rcMonitor", wt.RECT),
+            ("rcWork", wt.RECT),
+            ("dwFlags", wt.DWORD),
+        ]
+
+
+    LRESULT = ctypes.c_ssize_t
+    LONG_PTR = ctypes.c_ssize_t
+
+    user32.GetForegroundWindow.argtypes = []
+    user32.GetForegroundWindow.restype = wt.HWND
+    user32.MonitorFromWindow.argtypes = [wt.HWND, wt.DWORD]
+    user32.MonitorFromWindow.restype = wt.HMONITOR
+    user32.GetMonitorInfoW.argtypes = [wt.HMONITOR, ctypes.POINTER(MONITORINFO)]
+    user32.GetMonitorInfoW.restype = wt.BOOL
+    user32.GetDpiForSystem.argtypes = []
+    user32.GetDpiForSystem.restype = wt.UINT
+    user32.SetProcessDPIAware.argtypes = []
+    user32.SetProcessDPIAware.restype = wt.BOOL
+    user32.SystemParametersInfoW.argtypes = [wt.UINT, wt.UINT, wt.LPVOID, wt.UINT]
+    user32.SystemParametersInfoW.restype = wt.BOOL
+    user32.GetSystemMetrics.argtypes = [ctypes.c_int]
+    user32.GetSystemMetrics.restype = ctypes.c_int
+    user32.GetParent.argtypes = [wt.HWND]
+    user32.GetParent.restype = wt.HWND
+    user32.GetWindowLongPtrW.argtypes = [wt.HWND, ctypes.c_int]
+    user32.GetWindowLongPtrW.restype = LONG_PTR
+    user32.SetWindowLongPtrW.argtypes = [wt.HWND, ctypes.c_int, LONG_PTR]
+    user32.SetWindowLongPtrW.restype = LONG_PTR
+    user32.SetWindowPos.argtypes = [wt.HWND, wt.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wt.UINT]
+    user32.SetWindowPos.restype = wt.BOOL
+    user32.GetDC.argtypes = [wt.HWND]
+    user32.GetDC.restype = wt.HDC
+    user32.ReleaseDC.argtypes = [wt.HWND, wt.HDC]
+    user32.ReleaseDC.restype = ctypes.c_int
+    user32.PrintWindow.argtypes = [wt.HWND, wt.HDC, wt.UINT]
+    user32.PrintWindow.restype = wt.BOOL
+
+    gdi32.CreateCompatibleDC.argtypes = [wt.HDC]
+    gdi32.CreateCompatibleDC.restype = wt.HDC
+    gdi32.CreateCompatibleBitmap.argtypes = [wt.HDC, ctypes.c_int, ctypes.c_int]
+    gdi32.CreateCompatibleBitmap.restype = wt.HBITMAP
+    gdi32.SelectObject.argtypes = [wt.HDC, wt.HGDIOBJ]
+    gdi32.SelectObject.restype = wt.HGDIOBJ
+    gdi32.GetDIBits.argtypes = [wt.HDC, wt.HBITMAP, wt.UINT, wt.UINT, wt.LPVOID, wt.LPVOID, wt.UINT]
+    gdi32.GetDIBits.restype = ctypes.c_int
+    gdi32.DeleteObject.argtypes = [wt.HGDIOBJ]
+    gdi32.DeleteObject.restype = wt.BOOL
+    gdi32.DeleteDC.argtypes = [wt.HDC]
+    gdi32.DeleteDC.restype = wt.BOOL
+
+    if shcore is not None:
+        shcore.SetProcessDpiAwareness.argtypes = [ctypes.c_int]
+        shcore.SetProcessDpiAwareness.restype = ctypes.c_long
+        shcore.GetDpiForMonitor.argtypes = [wt.HMONITOR, ctypes.c_int, ctypes.POINTER(wt.UINT), ctypes.POINTER(wt.UINT)]
+        shcore.GetDpiForMonitor.restype = ctypes.c_long
+
+    if dwmapi is not None:
+        dwmapi.DwmSetWindowAttribute.argtypes = [wt.HWND, wt.DWORD, wt.LPVOID, wt.DWORD]
+        dwmapi.DwmSetWindowAttribute.restype = ctypes.c_long
+
+
+else:
+    user32 = None  # type: ignore[assignment]
+    gdi32 = None  # type: ignore[assignment]
     shcore = None
-try:
-    dwmapi = ctypes.WinDLL("dwmapi", use_last_error=True)
-except Exception:
     dwmapi = None
 
-GWL_EXSTYLE = -20
-WS_EX_LAYERED = 0x00080000
-WS_EX_TRANSPARENT = 0x00000020
-WS_EX_TOOLWINDOW = 0x00000080
-WS_EX_NOACTIVATE = 0x08000000
-WS_EX_APPWINDOW = 0x00040000
-
-SWP_NOSIZE = 0x0001
-SWP_NOMOVE = 0x0002
-SWP_NOZORDER = 0x0004
-SWP_NOACTIVATE = 0x0010
-SWP_FRAMECHANGED = 0x0020
-
-MONITOR_DEFAULTTONEAREST = 2
-SPI_GETCLIENTAREAANIMATION = 0x1042
-DWMWA_WINDOW_CORNER_PREFERENCE = 33
-DWMWA_BORDER_COLOR = 34
-DWMWCP_ROUND = 2
-
-
-class MONITORINFO(ctypes.Structure):
-    _fields_ = [
-        ("cbSize", wt.DWORD),
-        ("rcMonitor", wt.RECT),
-        ("rcWork", wt.RECT),
-        ("dwFlags", wt.DWORD),
-    ]
-
-
-LRESULT = ctypes.c_ssize_t
-LONG_PTR = ctypes.c_ssize_t
-
-user32.GetForegroundWindow.argtypes = []
-user32.GetForegroundWindow.restype = wt.HWND
-user32.MonitorFromWindow.argtypes = [wt.HWND, wt.DWORD]
-user32.MonitorFromWindow.restype = wt.HMONITOR
-user32.GetMonitorInfoW.argtypes = [wt.HMONITOR, ctypes.POINTER(MONITORINFO)]
-user32.GetMonitorInfoW.restype = wt.BOOL
-user32.GetDpiForSystem.argtypes = []
-user32.GetDpiForSystem.restype = wt.UINT
-user32.SetProcessDPIAware.argtypes = []
-user32.SetProcessDPIAware.restype = wt.BOOL
-user32.SystemParametersInfoW.argtypes = [wt.UINT, wt.UINT, wt.LPVOID, wt.UINT]
-user32.SystemParametersInfoW.restype = wt.BOOL
-user32.GetSystemMetrics.argtypes = [ctypes.c_int]
-user32.GetSystemMetrics.restype = ctypes.c_int
-user32.GetParent.argtypes = [wt.HWND]
-user32.GetParent.restype = wt.HWND
-user32.GetWindowLongPtrW.argtypes = [wt.HWND, ctypes.c_int]
-user32.GetWindowLongPtrW.restype = LONG_PTR
-user32.SetWindowLongPtrW.argtypes = [wt.HWND, ctypes.c_int, LONG_PTR]
-user32.SetWindowLongPtrW.restype = LONG_PTR
-user32.SetWindowPos.argtypes = [wt.HWND, wt.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wt.UINT]
-user32.SetWindowPos.restype = wt.BOOL
-user32.GetDC.argtypes = [wt.HWND]
-user32.GetDC.restype = wt.HDC
-user32.ReleaseDC.argtypes = [wt.HWND, wt.HDC]
-user32.ReleaseDC.restype = ctypes.c_int
-user32.PrintWindow.argtypes = [wt.HWND, wt.HDC, wt.UINT]
-user32.PrintWindow.restype = wt.BOOL
-
-gdi32.CreateCompatibleDC.argtypes = [wt.HDC]
-gdi32.CreateCompatibleDC.restype = wt.HDC
-gdi32.CreateCompatibleBitmap.argtypes = [wt.HDC, ctypes.c_int, ctypes.c_int]
-gdi32.CreateCompatibleBitmap.restype = wt.HBITMAP
-gdi32.SelectObject.argtypes = [wt.HDC, wt.HGDIOBJ]
-gdi32.SelectObject.restype = wt.HGDIOBJ
-gdi32.GetDIBits.argtypes = [wt.HDC, wt.HBITMAP, wt.UINT, wt.UINT, wt.LPVOID, wt.LPVOID, wt.UINT]
-gdi32.GetDIBits.restype = ctypes.c_int
-gdi32.DeleteObject.argtypes = [wt.HGDIOBJ]
-gdi32.DeleteObject.restype = wt.BOOL
-gdi32.DeleteDC.argtypes = [wt.HDC]
-gdi32.DeleteDC.restype = wt.BOOL
-
-if shcore is not None:
-    shcore.SetProcessDpiAwareness.argtypes = [ctypes.c_int]
-    shcore.SetProcessDpiAwareness.restype = ctypes.c_long
-    shcore.GetDpiForMonitor.argtypes = [wt.HMONITOR, ctypes.c_int, ctypes.POINTER(wt.UINT), ctypes.POINTER(wt.UINT)]
-    shcore.GetDpiForMonitor.restype = ctypes.c_long
-
-if dwmapi is not None:
-    dwmapi.DwmSetWindowAttribute.argtypes = [wt.HWND, wt.DWORD, wt.LPVOID, wt.DWORD]
-    dwmapi.DwmSetWindowAttribute.restype = ctypes.c_long
-
-
 def enable_dpi_awareness() -> None:
+    if sys.platform != "win32" or user32 is None:
+        return
     if shcore is not None:
         try:
             shcore.SetProcessDpiAwareness(2)
@@ -164,6 +176,17 @@ def enable_dpi_awareness() -> None:
 
 
 def is_reduced_motion() -> bool:
+    if sys.platform == "darwin":
+        try:
+            try:
+                from Cocoa import NSWorkspace
+            except ImportError:
+                from AppKit import NSWorkspace
+            return bool(NSWorkspace.sharedWorkspace().accessibilityDisplayShouldReduceMotion())
+        except Exception:
+            return False
+    if sys.platform != "win32" or user32 is None:
+        return False
     val = wt.BOOL(1)
     try:
         if user32.SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, ctypes.byref(val), 0):
@@ -173,7 +196,16 @@ def is_reduced_motion() -> bool:
     return False
 
 
-def _foreground_work_area_and_dpi() -> tuple[tuple[int, int, int, int], int]:
+def _foreground_work_area_and_dpi(root: tk.Tk | None = None) -> tuple[tuple[int, int, int, int], int]:
+    if sys.platform != "win32" or user32 is None:
+        if root is not None:
+            try:
+                w = int(root.winfo_screenwidth()) or 1440
+                h = int(root.winfo_screenheight()) or 900
+                return (0, 0, w, h), 96
+            except Exception:
+                pass
+        return (0, 0, 1440, 900), 96
     hwnd_fg = user32.GetForegroundWindow()
     hmon = user32.MonitorFromWindow(hwnd_fg, MONITOR_DEFAULTTONEAREST)
     mi = MONITORINFO()
@@ -248,29 +280,16 @@ def compute_meter_heights(
 class Overlay:
     """Vláknově bezpečná plovoucí kapsle nad hlavním vláknem Tk."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, defer_tk: bool = False) -> None:
         enable_dpi_awareness()
         self._queue: queue.Queue[tuple[str, Any]] = queue.Queue()
-        self._root = tk.Tk()
-        self._root.overrideredirect(True)
-        self._root.attributes("-topmost", True)
-        self._root.attributes("-alpha", 0.0)
-        self._root.configure(bg=COLOR_SVESTKA)
-        self._root.withdraw()
-
-        self._canvas = tk.Canvas(
-            self._root,
-            bg=COLOR_SVESTKA,
-            highlightthickness=0,
-            bd=0,
-        )
-        self._canvas.pack(fill="both", expand=True)
-
-        self._families = set(tkfont.families())
+        self._root: Any = None
+        self._canvas: Any = None
+        self._families: set[str] = set()
         self._dpi = 96
         self._font_timer: tkfont.Font | None = None
         self._font_label: tkfont.Font | None = None
-        self._ensure_fonts(96)
+        self._quit_requested = False
 
         self._state: str = ""
         self._visible = False
@@ -289,6 +308,41 @@ class Overlay:
         self._timer_id: int | None = None
         self._label_id: int | None = None
         self._toast_id: int | None = None
+
+        if not defer_tk:
+            self._init_tk()
+
+    def _init_tk(self) -> None:
+        if self._root is not None:
+            return
+        self._root = tk.Tk()
+        self._root.overrideredirect(True)
+        self._root.attributes("-topmost", True)
+        self._root.attributes("-alpha", 0.0)
+        self._transparent_ok = False
+        canvas_bg = COLOR_SVESTKA
+        if sys.platform == "darwin":
+            try:
+                self._root.attributes("-transparent", True)
+                self._root.configure(bg="systemTransparent")
+                canvas_bg = "systemTransparent"
+                self._transparent_ok = True
+            except tk.TclError:
+                self._root.configure(bg=COLOR_SVESTKA)
+        else:
+            self._root.configure(bg=COLOR_SVESTKA)
+        self._root.withdraw()
+
+        self._canvas = tk.Canvas(
+            self._root,
+            bg=canvas_bg,
+            highlightthickness=0,
+            bd=0,
+        )
+        self._canvas.pack(fill="both", expand=True)
+
+        self._families = set(tkfont.families())
+        self._ensure_fonts(96)
 
         self._apply_win32_styles()
         self._root.after(16, self._poll_queue)
@@ -318,9 +372,16 @@ class Overlay:
         self._queue.put(("call", fn))
 
     def quit(self) -> None:
+        self._quit_requested = True
         self._queue.put(("quit", None))
 
     def run(self) -> None:
+        if self._quit_requested:
+            return
+        if self._root is None:
+            self._init_tk()
+        if self._quit_requested:
+            return
         self._root.mainloop()
 
     def _ensure_fonts(self, dpi: int) -> None:
@@ -328,20 +389,31 @@ class Overlay:
             return
         self._dpi = dpi
         px = -max(1, _scale(12, dpi))
-        timer_family = (
-            "Segoe UI Variable Text Semibold"
-            if "Segoe UI Variable Text Semibold" in self._families
-            else "Segoe UI"
-        )
-        label_family = (
-            "Segoe UI Variable Text"
-            if "Segoe UI Variable Text" in self._families
-            else "Segoe UI"
-        )
+        if sys.platform == "darwin":
+            base = (
+                "SF Pro Text"
+                if "SF Pro Text" in self._families
+                else ("Helvetica Neue" if "Helvetica Neue" in self._families else "TkDefaultFont")
+            )
+            timer_family = base
+            label_family = base
+        else:
+            timer_family = (
+                "Segoe UI Variable Text Semibold"
+                if "Segoe UI Variable Text Semibold" in self._families
+                else "Segoe UI"
+            )
+            label_family = (
+                "Segoe UI Variable Text"
+                if "Segoe UI Variable Text" in self._families
+                else "Segoe UI"
+            )
         self._font_timer = tkfont.Font(root=self._root, family=timer_family, size=px, weight="bold")
         self._font_label = tkfont.Font(root=self._root, family=label_family, size=px, weight="normal")
 
     def _apply_win32_styles(self) -> None:
+        if sys.platform != "win32" or user32 is None or self._root is None:
+            return
         self._root.update_idletasks()
         wid = self._root.winfo_id()
         hwnd = int(user32.GetParent(wid) or wid)
@@ -508,7 +580,7 @@ class Overlay:
         )
 
     def _layout_and_position(self) -> None:
-        work, dpi = _foreground_work_area_and_dpi()
+        work, dpi = _foreground_work_area_and_dpi(self._root)
         self._ensure_fonts(dpi)
         assert self._font_timer is not None and self._font_label is not None
 
@@ -522,12 +594,30 @@ class Overlay:
         self._label_id = None
         self._toast_id = None
 
+        def _draw_mac_pill_bg(w: int, h: int) -> None:
+            if not getattr(self, "_transparent_ok", False):
+                return
+            r = min(h / 2.0, w / 2.0)
+            border_col = "#4A3553"
+            self._canvas.create_oval(0, 0, h, h, fill=border_col, outline="", width=0)
+            self._canvas.create_oval(max(0, w - h), 0, w, h, fill=border_col, outline="", width=0)
+            if w > h:
+                self._canvas.create_rectangle(r, 0, w - r, h, fill=border_col, outline="", width=0)
+            if h > 2 and w > 2:
+                self._canvas.create_oval(1, 1, h - 1, h - 1, fill=COLOR_SVESTKA, outline="", width=0)
+                self._canvas.create_oval(max(1, w - h + 1), 1, w - 1, h - 1, fill=COLOR_SVESTKA, outline="", width=0)
+                if w > h:
+                    self._canvas.create_rectangle(r, 1, w - r, h - 1, fill=COLOR_SVESTKA, outline="", width=0)
+
         if self._state == "zprava":
             max_w = _scale(BASE_TOAST_MAX_W, dpi)
             max_text_w = max(10, max_w - 2 * pad_x)
             shown = _truncate_ellipsis(self._font_label, self._toast_text, max_text_w)
             text_w = self._font_label.measure(shown)
             win_w = min(max_w, max(2 * pad_x + 1, text_w + 2 * pad_x))
+            if getattr(self, "_transparent_ok", False):
+                win_w = max(win_h, win_w)
+            _draw_mac_pill_bg(win_w, win_h)
             color = COLOR_CHYBA if self._toast_kind == "error" else COLOR_TEXT
             self._toast_id = self._canvas.create_text(
                 win_w / 2.0,
@@ -539,6 +629,7 @@ class Overlay:
             )
         else:
             win_w = _scale(STATE_WIDTHS[self._state], dpi)
+            _draw_mac_pill_bg(win_w, win_h)
             meter_w = _scale(BASE_METER_W, dpi)
             gap10 = _scale(BASE_GAP_10, dpi)
             gap8 = _scale(BASE_GAP_8, dpi)
@@ -657,6 +748,9 @@ def _capture_overlay_shot(ov: Overlay, out_path: Path) -> None:
     except Exception:
         pass
 
+    if sys.platform != "win32" or user32 is None or gdi32 is None:
+        raise RuntimeError("Snímek overlaye selhal a Win32 GDI není k dispozici.")
+
     from PIL import Image
 
     hwnd = ov._hwnd or int(user32.GetParent(ov.root.winfo_id()) or ov.root.winfo_id())
@@ -741,13 +835,151 @@ def _run_demo(shots_dir: Path | None = None) -> None:
         stop_flag.set()
 
 
+class OverlaySubprocessClient:
+    """Proxy na oddělený proces mluvka.overlay --stdio pro macOS (Tk vyžaduje vlastní hlavní vlákno)."""
+
+    def __init__(self, python_exe: str | None = None) -> None:
+        self._python_exe = python_exe or sys.executable
+        self._lock = threading.Lock()
+        self._proc: subprocess.Popen[bytes] | None = None
+        self._last_level_t = 0.0
+
+    def start(self) -> None:
+        with self._lock:
+            if self._proc is not None and self._proc.poll() is None:
+                return
+            try:
+                repo_root = Path(__file__).resolve().parent.parent
+                self._proc = subprocess.Popen(
+                    [self._python_exe, "-m", "mluvka.overlay", "--stdio"],
+                    cwd=str(repo_root),
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+            except Exception as exc:
+                log.warning("Nepodařilo se spustit overlay podproces: %s", exc)
+                self._proc = None
+
+    def _send(self, payload: dict[str, Any]) -> None:
+        line = (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8")
+        with self._lock:
+            proc = self._proc
+            if proc is None or proc.stdin is None or proc.poll() is not None:
+                return
+            try:
+                proc.stdin.write(line)
+                proc.stdin.flush()
+            except (BrokenPipeError, OSError):
+                self._proc = None
+
+    def show(self, state: str) -> None:
+        self._send({"op": "show", "state": state})
+
+    def set_level(self, level: float) -> None:
+        now = time.monotonic()
+        if (now - self._last_level_t) < 0.025:
+            return
+        self._last_level_t = now
+        self._send({"op": "level", "value": max(0.0, min(1.0, float(level)))})
+
+    def toast(self, text: str, kind: str = "info") -> None:
+        self._send({"op": "toast", "text": str(text), "kind": kind})
+
+    def hide(self) -> None:
+        self._send({"op": "hide"})
+
+    def quit(self) -> None:
+        with self._lock:
+            proc = self._proc
+            self._proc = None
+        if proc is None:
+            return
+        try:
+            if proc.stdin is not None and proc.poll() is None:
+                try:
+                    proc.stdin.write(b'{"op":"quit"}\n')
+                    proc.stdin.flush()
+                except OSError:
+                    pass
+                try:
+                    proc.stdin.close()
+                except OSError:
+                    pass
+            if proc.poll() is None:
+                try:
+                    proc.wait(timeout=1.5)
+                except subprocess.TimeoutExpired:
+                    proc.terminate()
+                    proc.wait(timeout=1.5)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+
+
+def _hide_macos_dock_icon() -> None:
+    if sys.platform != "darwin":
+        return
+    try:
+        import Cocoa
+        nsapp = getattr(Cocoa, "NSApplication", None)
+        if nsapp is not None:
+            nsapp.sharedApplication().setActivationPolicy_(1)
+            return
+    except Exception:
+        pass
+    try:
+        from AppKit import NSApplication
+        NSApplication.sharedApplication().setActivationPolicy_(1)
+    except Exception:
+        pass
+
+
+def _run_stdio() -> None:
+    ov = Overlay()
+    ov.call(_hide_macos_dock_icon)
+
+    def _reader() -> None:
+        try:
+            for raw_line in sys.stdin:
+                line = raw_line.strip()
+                if not line:
+                    continue
+                try:
+                    msg = json.loads(line)
+                except ValueError:
+                    continue
+                op = msg.get("op")
+                if op == "show":
+                    ov.show(str(msg.get("state", "")))
+                elif op == "level":
+                    ov.set_level(float(msg.get("value", 0.0)))
+                elif op == "toast":
+                    ov.toast(str(msg.get("text", "")), kind=str(msg.get("kind", "info")))
+                elif op == "hide":
+                    ov.hide()
+                elif op == "quit":
+                    break
+        finally:
+            ov.quit()
+
+    threading.Thread(target=_reader, name="mluvka-overlay-stdio", daemon=True).start()
+    ov.run()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m mluvka.overlay")
     parser.add_argument("--demo", action="store_true", help="Přehraje ukázku všech stavů")
     parser.add_argument("--shots", type=Path, default=None, help="Uloží snímky stavů a ikon")
+    parser.add_argument("--stdio", action="store_true", help="Čte příkazy pro overlay ze stdin (JSON řádky)")
     args = parser.parse_args(argv)
     if args.demo:
         _run_demo(args.shots)
+    elif args.stdio:
+        _run_stdio()
     return 0
 
 

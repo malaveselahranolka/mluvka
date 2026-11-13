@@ -9,6 +9,7 @@ import math
 import os
 import string
 import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -21,7 +22,10 @@ from typing import IO
 
 import numpy as np
 
-from mluvka import config, winproc
+if sys.platform == "darwin":
+    from mluvka import config, winproc_mac as winproc
+else:
+    from mluvka import config, winproc
 
 log = logging.getLogger("mluvka.asr")
 
@@ -256,7 +260,8 @@ class WhisperServer:
 
     def start(self, timeout_s: float = 60.0) -> None:
         if not self._exe.is_file():
-            raise FileNotFoundError(f"Chybí whisper-server.exe: {self._exe}")
+            exe_name = "whisper-server" if sys.platform == "darwin" else "whisper-server.exe"
+            raise FileNotFoundError(f"Chybí {exe_name}: {self._exe}")
         if not self._model.is_file():
             raise FileNotFoundError(f"Chybí model: {self._model}")
 

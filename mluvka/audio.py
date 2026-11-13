@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import logging
 import math
+import subprocess
+import sys
 import threading
 import wave
-import winsound
+
+if sys.platform == "win32":
+    import winsound
+else:
+    winsound = None  # type: ignore[assignment]
 from pathlib import Path
 from typing import Any, Callable, Literal
 
@@ -296,6 +302,10 @@ def ensure_sounds(data: Path | None = None) -> tuple[Path, Path]:
     return start_path, stop_path
 
 
+_AFPLAY_LOCK = threading.Lock()
+_AFPLAY_PROCS: list[subprocess.Popen[bytes]] = []
+
+
 def play_sound(
     kind: Literal["start", "stop"],
     enabled: bool,
@@ -306,6 +316,17 @@ def play_sound(
     try:
         start_path, stop_path = ensure_sounds(data)
         target = start_path if kind == "start" else stop_path
-        winsound.PlaySound(str(target), winsound.SND_FILENAME | winsound.SND_ASYNC)
+        if sys.platform == "darwin":
+            proc = subprocess.Popen(
+                ["afplay", str(target)],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            with _AFPLAY_LOCK:
+                _AFPLAY_PROCS[:] = [p for p in _AFPLAY_PROCS if p.poll() is None]
+                _AFPLAY_PROCS.append(proc)
+        elif winsound is not None:
+            winsound.PlaySound(str(target), winsound.SND_FILENAME | winsound.SND_ASYNC)
     except Exception as exc:
         log.debug("Přehrání zvuku selhalo: %s", exc)

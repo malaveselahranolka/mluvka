@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'">
+  <title>Mluvka</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="model.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <svg class="brand-mark" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="32" fill="#33223A" />
+          <rect x="11" y="23" width="10" height="18" rx="5" fill="#FFB37A" />
+          <rect x="27" y="15" width="10" height="34" rx="5" fill="#FFB37A" />
+          <rect x="43" y="19" width="10" height="26" rx="5" fill="#FFB37A" />
+        </svg>
+        <span class="brand-name">Mluvka</span>
+      </div>
+
+      <div class="status-chip" id="status-chip">
+        <span class="status-dot" id="status-dot" aria-hidden="true"></span>
+        <span class="status-text" id="status-text">Mluvka neběží</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="start-app-btn" hidden>Spustit</button>
+      </div>
+
+      <nav class="nav" aria-label="Sekce" id="main-nav">
+        <button type="button" class="nav-item active" data-page="prehled" aria-current="page">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="9" rx="2" />
+            <rect x="14" y="3" width="7" height="5" rx="2" />
+            <rect x="14" y="12" width="7" height="9" rx="2" />
+            <rect x="3" y="16" width="7" height="5" rx="2" />
+          </svg>
+          <span>Přehled</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="historie">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <polyline points="12 7 12 12 15.5 14" />
+          </svg>
+          <span>Historie</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="slovnik">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+            <path d="M8 7h8" />
+            <path d="M8 11h6" />
+          </svg>
+          <span>Slovník</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="zkratky">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2" />
+          </svg>
+          <span>Zkratky</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="trenink">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="6" y1="14" x2="6" y2="20" />
+            <line x1="12" y1="6" x2="12" y2="20" />
+            <line x1="18" y1="10" x2="18" y2="20" />
+          </svg>
+          <span>Trénink</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="model">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 17a8 8 0 1 1 16 0" />
+            <line x1="12" y1="17" x2="15.5" y2="11" />
+            <circle cx="12" cy="17" r="1" />
+          </svg>
+          <span>Model</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="ai">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+            <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z" />
+          </svg>
+          <span>AI úpravy</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="nastaveni">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <circle cx="9" cy="6" r="2.2" fill="var(--bg-side)" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <circle cx="15" cy="12" r="2.2" fill="var(--bg-side)" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+            <circle cx="10" cy="18" r="2.2" fill="var(--bg-side)" />
+          </svg>
+          <span>Nastavení</span>
+        </button>
+
+        <button type="button" class="nav-item" data-page="soukromi">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          <span>Soukromí</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">Přepis běží na tvém PC</div>
+    </aside>
+
+    <main class="content" id="content-area">
+      <div class="page-wrap">
+        <div class="config-warning-bar" id="config-invalid-bar" role="alert" hidden>config.json obsahuje chybu. Oprav ho, nebo ho smaž a Mluvka vytvoří nový.</div>
+        <section class="page active" id="page-prehled" aria-labelledby="h1-prehled">
+          <h1 id="h1-prehled">Přehled</h1>
+          <p class="page-help">Rychlý přehled diktování a posledních přepisů.</p>
+
+          <div class="card hero-card">
+            <div class="hero-top">
+              <div class="hero-title-group">
+                <div class="hero-headline" id="hero-headline">Drž pravý Ctrl a mluv</div>
+                <kbd class="keycap" id="hero-keycap">Pravý Ctrl</kbd>
+              </div>
+              <svg class="hero-meter" width="54" height="22" viewBox="0 0 54 22" aria-hidden="true">
+                <rect x="0" y="8" width="3" height="6" rx="1.5" />
+                <rect x="6" y="6.5" width="3" height="9" rx="1.5" />
+                <rect x="12" y="4.5" width="3" height="13" rx="1.5" />
+                <rect x="18" y="3" width="3" height="16" rx="1.5" />
+                <rect x="24" y="2" width="3" height="18" rx="1.5" />
+                <rect x="30" y="3" width="3" height="16" rx="1.5" />
+                <rect x="36" y="4.5" width="3" height="13" rx="1.5" />
+                <rect x="42" y="6.5" width="3" height="9" rx="1.5" />
+                <rect x="48" y="8" width="3" height="6" rx="1.5" />
+              </svg>
+            </div>
+            <ul class="hero-hints">
+              <li>Dvakrát ťukni = volné ruce</li>
+              <li>Esc = zrušit</li>
+              <li id="hero-cmd-hint">Shift + pravý Ctrl = příkaz pro Claude</li>
+            </ul>
+          </div>
+
+          <section class="stats-grid section-gap" aria-label="Statistiky za posledních 7 dní">
+            <div class="card stat-tile">
+              <div class="stat-value" id="stat-words">0</div>
+              <div class="stat-label">Slov za 7 dní</div>
+            </div>
+            <div class="card stat-tile">
+              <div class="stat-value" id="stat-count">0</div>
+              <div class="stat-label">Diktátů za 7 dní</div>
+            </div>
+            <div class="card stat-tile">
+              <div class="stat-value" id="stat-saved">0 min</div>
+              <div class="stat-label">Ušetřený čas</div>
+            </div>
+            <div class="card stat-tile">
+              <div class="stat-value" id="stat-wpm">0 <span class="stat-unit">slov/min</span></div>
+              <div class="stat-label">Rychlost mluvení</div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-recent">
+            <h2 class="section-title" id="h2-recent">Poslední diktáty</h2>
+            <div class="card card-list" id="recent-list"></div>
+          </section>
+        </section>
+
+        <section class="page" id="page-historie" aria-labelledby="h1-historie" hidden>
+          <h1 id="h1-historie">Historie</h1>
+          <p class="page-help">Všechny přepisy uložené lokálně v tomto počítači.</p>
+
+          <div class="toolbar">
+            <input type="search" class="input search-input" id="history-search" placeholder="Hledat v diktátech…" aria-label="Hledat v diktátech">
+            <button type="button" class="btn btn-destructive" id="clear-history-btn">Smazat vše</button>
+          </div>
+
+          <div id="history-container"></div>
+          <div class="load-more-wrap" id="history-more-wrap" hidden>
+            <button type="button" class="btn btn-secondary" id="history-more-btn">Načíst další</button>
+          </div>
+        </section>
+
+        <section class="page" id="page-slovnik" aria-labelledby="h1-slovnik" hidden>
+          <h1 id="h1-slovnik">Slovník</h1>
+          <p class="page-help">Slova se posílají modelu jako nápověda. Opravy se dělají po přepisu.</p>
+
+          <section aria-labelledby="h2-dict-import">
+            <h2 class="section-title" id="h2-dict-import">Doplnit slovník pomocí AI</h2>
+            <div class="card field-block">
+              <p class="card-desc">Zkopíruj prompt do svého ChatGPT nebo Clauda. Zná tě z konverzací, takže vypíše slova, která často používáš a ve kterých se přepis plete. Odpověď vlož sem.</p>
+              <div class="inline-actions">
+                <button type="button" class="btn btn-secondary" id="copy-import-prompt-btn">Zkopírovat prompt</button>
+              </div>
+              <textarea class="textarea" id="import-json-input" rows="4" placeholder="Sem vlož odpověď (JSON)…" aria-label="Odpověď z AI asistenta"></textarea>
+              <div class="inline-actions">
+                <button type="button" class="btn btn-secondary" id="import-load-btn">Načíst</button>
+              </div>
+              <div class="inline-result" id="import-error" aria-live="polite"></div>
+              <div class="import-preview" id="import-preview" hidden>
+                <div class="hint-line" id="import-preview-count"></div>
+                <div class="inline-actions">
+                  <button type="button" class="btn btn-primary" id="import-apply-btn">Přidat vše</button>
+                </div>
+                <div class="chip-list" id="import-preview-words" role="list"></div>
+                <div class="import-pairs-list" id="import-preview-pairs"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-words">
+            <h2 class="section-title" id="h2-words">Slova, která má Mluvka znát</h2>
+            <div class="card">
+              <div class="chip-list" id="words-list" role="list"></div>
+              <div class="inline-form">
+                <input type="text" class="input" id="word-input" maxlength="60" placeholder="Přidat slovo nebo název…" aria-label="Slovo do slovníku">
+                <button type="button" class="btn btn-secondary" id="add-word-btn">Přidat</button>
+              </div>
+              <div class="card-divider-row">
+                <div class="row-info">
+                  <div class="row-label" id="lbl-dict-prompt">Posílat slova modelu jako nápovědu</div>
+                  <div class="row-desc">Model předem ví, jaké vlastní názvy a odborné výrazy očekávat.</div>
+                </div>
+                <button type="button" class="switch" role="switch" aria-checked="true" aria-labelledby="lbl-dict-prompt" id="toggle-dict-prompt">
+                  <span class="switch-knob"></span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-corrections">
+            <h2 class="section-title" id="h2-corrections">Opravy</h2>
+            <div class="card">
+              <div class="pair-head" id="corrections-head">
+                <span>Když uslyším</span>
+                <span>Napiš</span>
+                <span></span>
+              </div>
+              <div id="corrections-list"></div>
+              <div class="card-footer-actions">
+                <button type="button" class="btn btn-secondary" id="add-correction-btn">Přidat opravu</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-pamet">
+            <h2 class="section-title" id="h2-pamet">Paměť chyb</h2>
+            <div class="card">
+              <div id="pamet-list"></div>
+              <div class="card-footer-actions" id="pamet-footer" hidden>
+                <button type="button" class="btn btn-destructive" id="clear-pamet-btn">Vymazat paměť</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="page" id="page-zkratky" aria-labelledby="h1-zkratky" hidden>
+          <h1 id="h1-zkratky">Zkratky</h1>
+          <p class="page-help">Když řekneš celou zkratku, vloží se místo ní uložený text.</p>
+
+          <div class="toolbar">
+            <button type="button" class="btn btn-secondary" id="add-snippet-btn">Přidat zkratku</button>
+          </div>
+          <div id="snippets-list" class="snippets-stack"></div>
+        </section>
+
+        <section class="page" id="page-trenink" aria-labelledby="h1-trenink" hidden>
+          <h1 id="h1-trenink">Trénink</h1>
+          <p class="page-help">Nahraj věty svým hlasem. Mluvka změří, jak přesně ti rozumí, a z nahrávek jde model doladit.</p>
+
+          <section aria-labelledby="h2-trenink-rec">
+            <h2 class="section-title" id="h2-trenink-rec">Nahrávání vět</h2>
+            <div class="card field-block">
+              <div class="trenink-progress-head">
+                <span class="hint-line" id="trenink-progress-label">Věta 1</span>
+                <span class="hint-line" id="trenink-recorded-count"></span>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <div class="progress-fill" id="trenink-progress-fill"></div>
+              </div>
+              <div class="trenink-sentence" id="trenink-sentence"></div>
+              <div class="trenink-controls">
+                <div class="trenink-live-box" id="trenink-live-box" hidden>
+                  <svg class="trenink-meter" id="trenink-meter" width="51" height="18" viewBox="0 0 51 18" aria-hidden="true">
+                    <rect x="0" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="6" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="12" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="18" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="24" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="30" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="36" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="42" y="7.5" width="3" height="3" rx="1.5" />
+                    <rect x="48" y="7.5" width="3" height="3" rx="1.5" />
+                  </svg>
+                  <span class="trenink-timer" id="trenink-timer">0:00</span>
+                  <span class="hint-line">Esc = zrušit</span>
+                </div>
+                <button type="button" class="btn btn-primary" id="trenink-record-btn">Nahrát</button>
+                <button type="button" class="btn btn-secondary" id="trenink-play-btn" disabled>Přehrát</button>
+                <button type="button" class="btn btn-tertiary" id="trenink-skip-btn">Přeskočit</button>
+                <button type="button" class="link-btn" id="trenink-rerecord-btn" hidden>Nahrát znovu</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-trenink-wer">
+            <h2 class="section-title" id="h2-trenink-wer">Přesnost na tvém hlase</h2>
+            <div class="card field-block">
+              <div class="inline-actions">
+                <button type="button" class="btn btn-secondary" id="trenink-measure-btn" disabled>Změřit</button>
+                <span class="hint-line" id="trenink-measure-hint">Nahraj aspoň 10 vět</span>
+              </div>
+              <div class="inline-result" id="trenink-measure-error" aria-live="polite"></div>
+              <div class="trenink-wer-box" id="trenink-wer-box" hidden>
+                <div class="trenink-wer-head">
+                  <span class="stat-value" id="trenink-wer-val">0 %</span>
+                  <span class="hint-line" id="trenink-wer-label"></span>
+                </div>
+                <div class="trenink-worst-wrap" id="trenink-worst-wrap" hidden>
+                  <h3 class="subsection-title">Nejhorší věty</h3>
+                  <div class="trenink-worst-list" id="trenink-worst-list"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-trenink-doladeni">
+            <h2 class="section-title" id="h2-trenink-doladeni">Doladění</h2>
+            <div class="card field-block card-doladeni">
+              <p class="card-desc">Model se doučí tvůj hlas a výslovnost z nahraných vět. Běží na tvém PC, nic se neodesílá.</p>
+              <div class="sr-only" id="doladeni-aria-status" aria-live="polite"></div>
+
+              <div class="doladeni-state" id="doladeni-state-idle">
+                <p class="doladeni-status-text" id="doladeni-idle-text"></p>
+                <div class="inline-actions">
+                  <button type="button" class="btn btn-primary" id="doladeni-start-btn" disabled>Doladit na mém hlase</button>
+                </div>
+              </div>
+
+              <div class="doladeni-state" id="doladeni-state-running" hidden>
+                <div class="doladeni-phase-head">
+                  <span class="doladeni-phase-label" id="doladeni-phase-label">Příprava nahrávek</span>
+                </div>
+                <div class="progress-track" id="doladeni-progress-track" aria-hidden="true">
+                  <div class="progress-fill" id="doladeni-progress-fill"></div>
+                </div>
+                <div class="doladeni-progress-meta">
+                  <span class="doladeni-progress-text" id="doladeni-progress-text"></span>
+                  <span class="hint-line" id="doladeni-loss-text" hidden></span>
+                </div>
+                <div class="inline-actions">
+                  <button type="button" class="btn btn-secondary" id="doladeni-stop-btn">Zastavit</button>
+                </div>
+                <details class="doladeni-details" id="doladeni-details">
+                  <summary>Podrobnosti</summary>
+                  <pre class="doladeni-log" id="doladeni-log"></pre>
+                </details>
+              </div>
+
+              <div class="doladeni-state" id="doladeni-state-done" hidden>
+                <div class="doladeni-table-wrap">
+                  <table class="doladeni-table">
+                    <thead>
+                      <tr>
+                        <th scope="col"></th>
+                        <th scope="col">Současný model</th>
+                        <th scope="col">Doladěný</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row" id="doladeni-row-vety-label">Tvůj hlas</th>
+                        <td id="doladeni-pred-vety">–</td>
+                        <td id="doladeni-po-vety">–</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">FLEURS</th>
+                        <td id="doladeni-pred-fleurs">–</td>
+                        <td id="doladeni-po-fleurs">–</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="doladeni-verdict" id="doladeni-verdict-text"></p>
+                <div class="inline-actions" id="doladeni-done-actions">
+                  <button type="button" class="btn btn-primary" id="doladeni-use-btn" hidden>Používat doladěný model</button>
+                  <span class="inline-result ok" id="doladeni-active-note" hidden>Používá se. Přepne se při další diktaci.</span>
+                  <button type="button" class="btn btn-tertiary" id="doladeni-rerun-btn" hidden>Doladit znovu</button>
+                </div>
+                <div class="hint-line" id="doladeni-done-meta" hidden></div>
+              </div>
+
+              <div class="doladeni-state" id="doladeni-state-error" hidden>
+                <div class="inline-result error doladeni-error-text" id="doladeni-error-text"></div>
+                <div class="inline-actions">
+                  <button type="button" class="btn btn-secondary" id="doladeni-retry-btn">Zkusit znovu</button>
+                </div>
+                <details class="doladeni-details" id="doladeni-error-details" hidden>
+                  <summary>Podrobnosti</summary>
+                  <pre class="doladeni-log" id="doladeni-error-log"></pre>
+                </details>
+              </div>
+
+              <div class="doladeni-state" id="doladeni-state-stopped" hidden>
+                <p class="doladeni-status-text">Doladění jsi zastavil. Nic se nezměnilo.</p>
+                <div class="inline-actions">
+                  <button type="button" class="btn btn-secondary" id="doladeni-stopped-rerun-btn">Doladit znovu</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-label="Model">
+            <div class="card field-block">
+              <div class="inline-actions">
+                <span class="hint-line">Model a jeho přesnost vybereš na stránce Model.</span>
+                <button type="button" class="btn btn-tertiary" data-goto-page="model">Otevřít Model</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-trenink-diktat">
+            <h2 class="section-title" id="h2-trenink-diktat">Ukládat zvuk diktátů</h2>
+            <div class="card card-rows">
+              <div class="setting-row">
+                <div class="row-info">
+                  <div class="row-label" id="lbl-save-dictation">Ukládat zvuk diktátů</div>
+                  <div class="row-desc">Zvuk běžných diktátů se uloží do složky Trénink, aby šel použít k doladění. Jen v tomto PC.</div>
+                </div>
+                <button type="button" class="switch" role="switch" aria-checked="false" aria-labelledby="lbl-save-dictation" id="toggle-save-dictation">
+                  <span class="switch-knob"></span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-trenink-diktaty">
+            <div class="diktaty-section-head">
+              <h2 class="section-title" id="h2-trenink-diktaty">Tvé diktáty k doladění</h2>
+              <span class="diktaty-counts" id="diktaty-counts" aria-live="polite">Ověřeno 0 z 0 · 0 min</span>
+            </div>
+            <div class="card card-list card-diktaty">
+              <div class="empty-state" id="diktaty-empty" hidden>Zapni Ukládat zvuk diktátů. Diktáty se pak objeví tady.</div>
+              <div class="diktaty-list" id="diktaty-list"></div>
+              <div class="diktaty-more-wrap" id="diktaty-more-wrap" hidden>
+                <button type="button" class="btn btn-secondary" id="diktaty-more-btn">Načíst další</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-trenink-dar">
+            <h2 class="section-title" id="h2-trenink-dar">Darovat nahrávky</h2>
+            <div class="card field-block">
+              <p class="card-desc">Pomoz vylepšit české rozpoznávání řeči pro všechny. Balíček se zatím jen vytvoří v tvém PC, nic se neodesílá.</p>
+              <div class="inline-actions">
+                <button type="button" class="btn btn-secondary" id="open-dar-btn">Připravit balíček…</button>
+              </div>
+              <div class="dar-result-row" id="dar-result-wrap" hidden>
+                <span class="inline-result ok" id="dar-result-text"></span>
+                <button type="button" class="link-btn" id="open-dar-folder-btn">Otevřít složku</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="page" id="page-model" aria-labelledby="h1-model" hidden>
+          <h1 id="h1-model">Model</h1>
+          <p class="page-help">Jak přesně a rychle ti Mluvka rozumí s různým nastavením. Měřeno na tomhle počítači.</p>
+          <p class="inline-result" id="mdl-error" role="alert" hidden></p>
+          <p class="sr-only" id="mdl-status" aria-live="polite"></p>
+
+          <section aria-label="Aktuální nastavení">
+            <div class="card mdl-hero" id="mdl-hero"></div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-mdl-presets">
+            <h2 class="section-title" id="h2-mdl-presets">Doporučená nastavení</h2>
+            <div class="mdl-presets" id="mdl-presets"></div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-mdl-compare">
+            <h2 class="section-title" id="h2-mdl-compare">Porovnání nastavení</h2>
+            <div class="card mdl-table-card">
+              <table class="mdl-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Nastavení</th>
+                    <th scope="col">Známka</th>
+                    <th scope="col">Chybovost</th>
+                    <th scope="col">1 min řeči</th>
+                    <th scope="col"><span class="sr-only">Akce</span></th>
+                  </tr>
+                </thead>
+                <tbody id="mdl-table-body"></tbody>
+              </table>
+              <div class="mdl-add">
+                <label class="mdl-add-field">Model
+                  <select class="select" id="mdl-add-model"></select>
+                </label>
+                <label class="mdl-add-field">Beam
+                  <select class="select" id="mdl-add-beam">
+                    <option value="1">1 — rychlé</option>
+                    <option value="5" selected>5 — doporučené</option>
+                    <option value="8">8</option>
+                  </select>
+                </label>
+                <div class="mdl-add-switch">
+                  <button type="button" class="switch" role="switch" aria-checked="false" aria-labelledby="lbl-mdl-haiku" id="mdl-add-haiku">
+                    <span class="switch-knob"></span>
+                  </button>
+                  <span id="lbl-mdl-haiku">Úprava přes Haiku</span>
+                  <span class="hint-line" id="mdl-add-haiku-hint" hidden>Chybí API klíč</span>
+                </div>
+                <button type="button" class="btn btn-primary" id="mdl-add-btn">Přidat a změřit</button>
+                <span class="mdl-row-error" id="mdl-add-error" aria-live="polite"></span>
+              </div>
+              <p class="mdl-notice">Měření trvá pár minut a diktování mezitím funguje. S Haiku se do Claude posílá jen text veřejných testovacích vět, ne tvoje data. Stojí to zlomek koruny.</p>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-mdl-tech">
+            <h2 class="section-title" id="h2-mdl-tech">Technické údaje</h2>
+            <div class="mdl-tech">
+              <div>
+                <h3>Testovací počítač</h3>
+                <dl class="mdl-dl" id="mdl-stroj"></dl>
+              </div>
+              <div>
+                <h3>Na čem měříme</h3>
+                <p class="mdl-prose">FLEURS (Google): profesionálně čtené věty z Wikipedie, čisté nahrávky, hodně čísel a cizích jmen. Používáme 40 vět.</p>
+                <p class="mdl-prose">Common Voice (Mozilla): věty nahrané dobrovolníky doma na běžné mikrofony, blíž běžnému diktování. Pro rychlé měření používáme 100 vět, pro přesné 500. Model CzechSpeech je při tréninku neviděl.</p>
+                <p class="mdl-prose">Chybovost (WER) říká, kolik slov ze 100 se přepíše špatně, bez ohledu na interpunkci a velká písmena. Rychlost říká, za kolik sekund od puštění klávesy je hotová 1 minuta řeči, včetně úpravy přes Haiku, je-li zapnutá.</p>
+                <p class="mdl-prose">Měříme stejně, jako diktuje aplikace, včetně nápovědy ze Slovníku. S úpravou přes Haiku vychází chybovost o něco vyšší, protože Haiku maže výplňová slova a mění zápis čísel, zatímco testovací věty jsou přepsané doslova. Rychlost se může lišit, když grafiku zrovna používá jiný program.</p>
+              </div>
+              <div>
+                <h3>Jak se počítá známka</h3>
+                <p class="mdl-prose">Známka vychází z průměrné chybovosti na obou sadách.</p>
+                <div class="mdl-scale" id="mdl-scale"></div>
+                <div class="mdl-speed-legend" id="mdl-speed-legend"></div>
+              </div>
+              <div>
+                <h3>Modely</h3>
+                <div class="card mdl-table-card">
+                  <table class="mdl-table">
+                    <thead><tr><th scope="col">Model</th><th scope="col">Soubor</th><th scope="col">Velikost</th><th scope="col">Kvantizace</th><th scope="col">Licence</th></tr></thead>
+                    <tbody id="mdl-modely-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <h3>Surová data</h3>
+                <div class="card mdl-raw">
+                  <table class="mdl-table">
+                    <thead><tr><th scope="col">Datum</th><th scope="col">Nastavení</th><th scope="col">Sada</th><th scope="col">Vět</th><th scope="col">WER</th><th scope="col">s / min</th></tr></thead>
+                    <tbody id="mdl-raw-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="page" id="page-ai" aria-labelledby="h1-ai" hidden>
+          <h1 id="h1-ai">AI úpravy</h1>
+          <p class="page-help">Volitelné uhlazení přepisu a hlasové příkazy přes Claude Haiku 5.5.</p>
+
+          <div class="card">
+            <div class="setting-row single-row">
+              <div class="row-info">
+                <div class="row-label" id="lbl-ai-cleanup">Uhlazovat každý diktát</div>
+                <div class="row-desc">Claude Haiku 5.5 odstraní výplňová slova, opraví přeřeknutí a udělá odrážky. Přidá asi 1–2 s.</div>
+              </div>
+              <button type="button" class="switch" role="switch" aria-checked="true" aria-labelledby="lbl-ai-cleanup" id="toggle-ai-cleanup">
+                <span class="switch-knob"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card section-gap">
+            <div class="field-block">
+              <div class="field-header">
+                <label class="row-label" for="api-key-input">API klíč pro Claude</label>
+                <span class="key-status" id="api-key-badge">Klíč není uložený</span>
+              </div>
+              <div class="inline-form">
+                <input type="password" class="input" id="api-key-input" placeholder="Zadej API klíč…" autocomplete="off">
+                <button type="button" class="btn btn-primary" id="save-api-key-btn">Uložit</button>
+                <button type="button" class="btn btn-secondary" id="test-api-key-btn">Ověřit</button>
+                <button type="button" class="btn btn-destructive" id="remove-api-key-btn" hidden>Odebrat</button>
+              </div>
+              <div class="inline-result" id="api-key-result" aria-live="polite"></div>
+              <div class="hint-line">
+                Kde vzít klíč: <button type="button" class="link-btn" id="open-console-btn">console.anthropic.com</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box section-gap">
+            Co odchází: jen text diktátu nebo příkazu, nikdy zvuk. Kam: Anthropic (USA). Bez klíče nic neodchází.
+          </div>
+        </section>
+
+        <section class="page" id="page-nastaveni" aria-labelledby="h1-nastaveni" hidden>
+          <h1 id="h1-nastaveni">Nastavení</h1>
+          <p class="page-help">Klávesa, mikrofon, kanál a ukládání historie. Změny se ukládají hned.</p>
+
+          <div class="card card-rows">
+            <div class="setting-row">
+              <div class="row-info">
+                <label class="row-label" for="sel-vk">Klávesa pro diktát</label>
+                <div class="row-desc">Drž pro diktát nebo dvakrát ťukni pro volné ruce.</div>
+              </div>
+              <select class="select" id="sel-vk">
+                <option value="163">Pravý Ctrl</option>
+                <option value="161">Pravý Shift</option>
+                <option value="20">Caps Lock</option>
+                <option value="120">F9</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div class="row-info">
+                <label class="row-label" for="sel-mic">Mikrofon</label>
+                <div class="row-desc">Vstupní zařízení použité při nahrávání.</div>
+              </div>
+              <select class="select select-wide" id="sel-mic">
+                <option value="">Výchozí (systém)</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div class="row-info">
+                <div class="row-label" id="lbl-sounds">Zvuky</div>
+                <div class="row-desc">Krátké tóny při začátku a konci nahrávání.</div>
+              </div>
+              <button type="button" class="switch" role="switch" aria-checked="true" aria-labelledby="lbl-sounds" id="toggle-sounds">
+                <span class="switch-knob"></span>
+              </button>
+            </div>
+
+            <div class="setting-row">
+              <div class="row-info">
+                <div class="row-label" id="lbl-autostart">Spouštět po přihlášení</div>
+                <div class="row-desc">Automaticky spustí Mluvku na pozadí po startu Windows.</div>
+              </div>
+              <button type="button" class="switch" role="switch" aria-checked="false" aria-labelledby="lbl-autostart" id="toggle-autostart">
+                <span class="switch-knob"></span>
+              </button>
+            </div>
+          </div>
+
+          <section class="section-gap" aria-labelledby="h2-channel">
+            <h2 class="section-title" id="h2-channel">Kanál</h2>
+            <div class="card card-rows">
+              <div class="setting-row setting-row-stack">
+                <div class="setting-row-top">
+                  <div class="row-info">
+                    <label class="row-label" for="input-webhook">Webhook URL</label>
+                    <div class="row-desc">Adresa pro Slack, Discord, Teams nebo vlastní https webhook.</div>
+                  </div>
+                  <div class="row-control-grow">
+                    <input type="url" class="input" id="input-webhook" placeholder="Adresa https webhooku…">
+                  </div>
+                </div>
+                <div class="inline-result" id="webhook-error" aria-live="polite"></div>
+              </div>
+
+              <div class="setting-row">
+                <div class="row-info">
+                  <div class="row-label" id="lbl-channel-on">Posílat diktáty do kanálu</div>
+                  <div class="row-desc">Odešle každý dokončený diktát na zadanou adresu.</div>
+                </div>
+                <button type="button" class="switch" role="switch" aria-checked="true" aria-labelledby="lbl-channel-on" id="toggle-channel">
+                  <span class="switch-knob"></span>
+                </button>
+              </div>
+
+              <div class="setting-row setting-row-stack">
+                <div class="setting-row-top">
+                  <div class="row-info">
+                    <div class="row-label">Ověření spojení</div>
+                    <div class="row-desc">Odešle krátkou zprávu „Test z Mluvky“.</div>
+                  </div>
+                  <button type="button" class="btn btn-secondary" id="test-webhook-btn">Poslat test</button>
+                </div>
+                <div class="inline-result" id="webhook-test-result" aria-live="polite"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-history-cfg">
+            <h2 class="section-title" id="h2-history-cfg">Historie</h2>
+            <div class="card card-rows">
+              <div class="setting-row">
+                <div class="row-info">
+                  <div class="row-label" id="lbl-history-save">Ukládat historii</div>
+                  <div class="row-desc">Ukládat přepisy místně do historie v tomto počítači.</div>
+                </div>
+                <button type="button" class="switch" role="switch" aria-checked="true" aria-labelledby="lbl-history-save" id="toggle-history">
+                  <span class="switch-knob"></span>
+                </button>
+              </div>
+
+              <div class="setting-row">
+                <div class="row-info">
+                  <label class="row-label" for="sel-history-days">Uchovávat</label>
+                  <div class="row-desc">Starší záznamy se při spuštění automaticky odstraní.</div>
+                </div>
+                <select class="select" id="sel-history-days">
+                  <option value="1">1 den</option>
+                  <option value="7">7 dní</option>
+                  <option value="30">30 dní</option>
+                  <option value="90">90 dní</option>
+                  <option value="365">365 dní</option>
+                </select>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="page" id="page-soukromi" aria-labelledby="h1-soukromi" hidden>
+          <h1 id="h1-soukromi">Soukromí</h1>
+          <p class="page-help">Přepis řeči běží lokálně na tvém PC. Zvuk nikdy neodchází.</p>
+
+          <section aria-labelledby="h2-local">
+            <h2 class="section-title" id="h2-local">Zůstává v PC</h2>
+            <div class="card card-rows">
+              <div class="privacy-row">
+                <svg class="privacy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+                <div class="row-info">
+                  <div class="row-label">Zvuk</div>
+                  <div class="row-desc">Nahrává se jen při držení klávesy a zpracuje se v paměti.</div>
+                </div>
+              </div>
+              <div class="privacy-row">
+                <svg class="privacy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                  <path d="M9 9h6M9 13h6M9 17h4" />
+                </svg>
+                <div class="row-info">
+                  <div class="row-label">Přepis</div>
+                  <div class="row-desc">Lokální model CzechSpeech běží na 127.0.0.1.</div>
+                </div>
+              </div>
+              <div class="privacy-row">
+                <svg class="privacy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15.5 14" />
+                </svg>
+                <div class="row-info">
+                  <div class="row-label">Historie</div>
+                  <div class="row-desc">Uložená místně v souboru historie.jsonl.</div>
+                </div>
+              </div>
+              <div class="privacy-row">
+                <svg class="privacy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                </svg>
+                <div class="row-info">
+                  <div class="row-label">Slovník a zkratky</div>
+                  <div class="row-desc">Uložené místně v config.json mimo OneDrive.</div>
+                </div>
+              </div>
+              <div class="privacy-row">
+                <svg class="privacy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.79 1.02 1.44 1.08H21a2 2 0 0 1 0 4h-.09c-.66.06-1.19.48-1.51 1.08z" />
+                </svg>
+                <div class="row-info">
+                  <div class="row-label">Nastavení</div>
+                  <div class="row-desc">Konfigurace a API klíč jsou jen v místní složce dat.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-gap" aria-labelledby="h2-outbound">
+            <h2 class="section-title" id="h2-outbound">Odchází jen když to zapneš</h2>
+            <div class="card card-rows">
+              <div class="privacy-row">
+                <svg class="privacy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+                </svg>
+                <div class="row-info">
+                  <div class="row-label">Text pro Claude</div>
+                  <div class="row-desc" id="privacy-claude-status">Vypnuto</div>
+                </div>
+              </div>
+              <div class="privacy-row">
+                <svg class="privacy-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M22 2L11 13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+                <div class="row-info">
+                  <div class="row-label">Text do kanálu</div>
+                  <div class="row-desc" id="privacy-channel-status">Vypnuto</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <p class="netguard-line" id="netguard-line">Síťová pojistka povoluje jen: nic</p>
+
+          <div class="privacy-actions">
+            <button type="button" class="btn btn-secondary" id="open-data-btn">Otevřít složku s daty</button>
+            <button type="button" class="btn btn-destructive" id="privacy-clear-btn">Smazat historii</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title">
+    <div class="dialog-body">
+      <h2 class="dialog-title" id="confirm-title">Smazat historii?</h2>
+      <p class="dialog-text">Všechny uložené diktáty se trvale odstraní z tohoto počítače. Tuto akci nelze vrátit.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="confirm-cancel-btn">Zrušit</button>
+        <button type="button" class="btn btn-danger-fill" id="confirm-delete-btn">Smazat</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm-dialog dar-dialog" id="dar-dialog" aria-labelledby="dar-title">
+    <div class="dialog-body">
+      <h2 class="dialog-title" id="dar-title">Darovat nahrávky</h2>
+      <div class="dar-consent-box">
+        <p class="dialog-text">Daruji své hlasové nahrávky a jejich přepisy pro trénink a vyhodnocení otevřených modelů rozpoznávání české řeči.</p>
+        <p class="dialog-text">Beru na vědomí, že hlas je osobní údaj: balíček neobsahuje moje jméno ani e-mail, ale podle hlasu mě lze poznat.</p>
+        <p class="dialog-text">Balíček se zatím jen vytvoří v mém počítači. Kam a pod jakou licencí se data předají, se dozvím předem a rozhodnu sám.</p>
+        <p class="dialog-text">Souhlas mohu kdykoli odvolat. Podle identifikátoru dárce pak budou mé nahrávky z datasetu odstraněny.</p>
+      </div>
+      <div class="dar-checks">
+        <label class="dar-check-label">
+          <input type="checkbox" id="dar-chk-1">
+          <span>Daruji své hlasové nahrávky a přepisy pro trénink otevřených modelů.</span>
+        </label>
+        <label class="dar-check-label">
+          <input type="checkbox" id="dar-chk-2">
+          <span>Beru na vědomí, že podle hlasu mě lze poznat; balíček neobsahuje jméno ani e-mail.</span>
+        </label>
+        <label class="dar-check-label">
+          <input type="checkbox" id="dar-chk-3">
+          <span>Rozumím, že se balíček zatím vytvoří jen v mém počítači a souhlas mohu odvolat.</span>
+        </label>
+        <label class="dar-check-label dar-check-optional">
+          <input type="checkbox" id="dar-chk-diktaty">
+          <span>Přidat i zvuk běžných diktátů (může obsahovat soukromé informace)</span>
+        </label>
+      </div>
+      <div class="inline-result" id="dar-dialog-error" aria-live="polite"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="dar-cancel-btn">Zrušit</button>
+        <button type="button" class="btn btn-primary" id="dar-submit-btn" disabled>Vytvořit balíček</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="snackbar" id="snackbar" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+  <script src="model.js"></script>
+</body>
+</html>

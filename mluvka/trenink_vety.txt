@@ -1,0 +1,98 @@
+Dobrý den, posílám vám slíbenou nabídku a těším se na vaši odpověď.
+Schůzku bychom mohli přesunout na čtvrtek 14. listopadu v deset hodin.
+Faktura číslo 2026-0147 je splatná do konce měsíce.
+Prosím, zavolejte mi zpátky, až budete mít chvilku.
+Děkuji za rychlou reakci, s pozdravem.
+Zítra ráno odjíždím do Brna, vrátím se v pátek odpoledne.
+Cena za tři kusy je dohromady 4 590 korun včetně DPH.
+Můžete mi poslat podklady ještě dnes do šesti večer?
+Projekt jsme dokončili o dva týdny dřív, než jsme plánovali.
+Pošli mi prosím odkaz na sdílenou složku s fotkami.
+Napiš funkci, která načte soubor CSV a vrátí průměr druhého sloupce.
+Oprav chybu v přihlašovacím formuláři, heslo se neukládá.
+Přidej do databáze novou tabulku objednávky se sloupci id, datum a cena.
+Zkontroluj, jestli testy procházejí, a teprve potom udělej commit.
+Vytvoř jednoduchou webovou stránku s kontaktním formulářem.
+Přejmenuj proměnnou data na seznam zákazníků a uprav všechna volání.
+Spusť vývojový server a otevři aplikaci v prohlížeči.
+Napiš e-mail kolegovi, že nasazení přesouváme na příští úterý.
+Shrň tento dokument do pěti bodů a zvýrazni rizika.
+Přelož tenhle odstavec do angličtiny, ale zachovej odborné výrazy.
+Telefonní číslo je 777 123 456, volejte nejlépe po obědě.
+Adresa je Masarykova 12, 602 00 Brno.
+Moje e-mailová adresa je jan tečka novak zavináč seznam tečka cz.
+Kurz eura dnes stojí zhruba dvacet pět korun.
+Teplota venku klesla na minus tři stupně Celsia.
+Vlak odjíždí v 7:42 z třetí koleje.
+V roce 1989 proběhla sametová revoluce.
+Objednávka obsahuje 12 položek a váží asi 3,5 kilogramu.
+Sleva platí od 1. prosince do 31. prosince 2026.
+Na účet 1234567890/0800 pošlete zálohu 15 000 korun.
+Řeřicha, třešně a čtyři čerstvé šťavnaté švestky.
+Příliš žluťoučký kůň úpěl ďábelské ódy.
+Strč prst skrz krk.
+Na dvoře se proháněly děti a pes štěkal na kočku.
+Večer si uvařím čaj a přečtu pár kapitol knihy.
+V zahradě rozkvetly meruňky a vzduch voněl jarem.
+Musím ještě koupit chleba, mléko, máslo a vajíčka.
+Babička peče buchty s povidly každou neděli.
+Po dešti se na obloze objevila duha.
+Kolo mám v servisu, vyzvednu si ho v sobotu.
+Nový řádek.
+Nový odstavec.
+Za prvé zkontrolujeme rozpočet, za druhé termíny a za třetí kontakty.
+Otázka zní, jestli to stihneme do konce týdne.
+Ano, souhlasím, ale potřebuji to mít písemně.
+Ne, tohle nechci, udělejte to prosím jinak.
+Možná by bylo lepší začít menší verzí a pak ji rozšířit.
+Upřímně řečeno, tohle řešení se mi moc nelíbí.
+Klient chce změnit barvu loga na tmavě modrou.
+Webová stránka se načítá pomalu, hlavně na mobilu.
+Ve středu máme poradu s vedením, připravte prosím prezentaci.
+Předávací protokol podepíšeme při převzetí.
+Smlouva nabývá účinnosti dnem podpisu obou stran.
+Reklamaci vyřídíme do třiceti dnů od jejího uplatnění.
+Zákazník si stěžoval na zpožděnou dodávku.
+Pojištění se vztahuje i na škody způsobené vodou.
+Lékař mi doporučil tři dny klidu a dostatek tekutin.
+Rezervace na pátek na sedm hodin pro čtyři osoby.
+Hodina jógy začíná v půl sedmé večer.
+Kurz bude probíhat online přes videohovor.
+Umělá inteligence dokáže přepsat řeč do textu během pár sekund.
+Model běží lokálně na grafické kartě a data nikam neodcházejí.
+Aktualizace operačního systému vyžaduje restart počítače.
+Heslo musí mít aspoň dvanáct znaků a jednu číslici.
+Záloha disku proběhla úspěšně v noci ve dvě hodiny.
+Připojení k internetu je dnes nestabilní.
+Tiskárna hlásí, že došel papír.
+Nabíječku jsem nechal v kanceláři na stole.
+Baterie v notebooku vydrží asi osm hodin.
+Na schůzce zazněly tři hlavní připomínky k rozpočtu.
+Rozhodli jsme se, že projekt spustíme až po Novém roce.
+Tým se rozrostl o dva nové vývojáře a jednu designérku.
+Zápis z porady rozešlu všem účastníkům ještě dnes.
+Prosím o potvrzení přijetí této zprávy.
+Omlouvám se, ale na schůzku nestihnu dorazit včas.
+Gratuluji k úspěšnému dokončení projektu.
+Přeji pěkný víkend a hodně odpočinku.
+Hlavní město České republiky je Praha.
+Morava je známá vínem a folklorem.
+Krkonoše jsou nejvyšší pohoří v Česku.
+Sněžka měří 1 603 metrů nad mořem.
+Vltava protéká Českými Budějovicemi i Prahou.
+V Olomouci mají výborné tvarůžky.
+Ostrava byla dříve centrem těžkého průmyslu.
+Liberec leží pod Ještědem.
+Česká Lípa, Ústí nad Labem a Hradec Králové.
+Pan Dvořák a paní Svobodová přijdou ve dvě.
+Firma Novák a syn s. r. o. dodává stavební materiál.
+Předseda představenstva odstoupil k 30. září.
+Akcie společnosti vzrostly o 4,2 procenta.
+Inflace v říjnu zpomalila na 2,8 procenta.
+Hypotéka s fixací na pět let vychází na 4,9 procenta.
+Daňové přiznání je potřeba podat do 1. dubna.
+Datová schránka přijala novou zprávu z finančního úřadu.
+Žádost o stavební povolení jsme podali minulý týden.
+Ve frontě před úřadem stálo asi dvacet lidí.
+Vezmi si deštník, odpoledne má pršet.
+Ať se daří a brzy na viděnou.

@@ -1,0 +1,7 @@
+__pycache__/
+.pytest_cache/
+.ai/
+*.bin
+*.wav
+*.zip
+node_modules/

@@ -1,0 +1,453 @@
+/* Stránka Model — známka, rychlost (9-čárkový měřič), doporučení, porovnání, technické údaje */
+
+.mdl-hero {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 24px;
+}
+
+.mdl-grade-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.mdl-grade {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.mdl-grade.is-bad {
+  background: var(--danger-hover);
+  color: var(--danger);
+}
+
+.mdl-grade.is-none {
+  background: var(--sunk);
+  color: var(--ink-3);
+}
+
+.mdl-grade-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.mdl-caption {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.mdl-hero-body > .btn {
+  align-self: flex-start;
+}
+
+.mdl-hero-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mdl-setup-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.mdl-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mdl-speed-sm {
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.mdl-facts {
+  font-size: 14px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.mdl-meta {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 9-čárkový měřič rychlosti (podpis značky) */
+.mdl-meter {
+  display: block;
+  flex: none;
+}
+
+.mdl-meter rect {
+  fill: var(--line);
+}
+
+.mdl-meter rect.on {
+  fill: var(--plum);
+}
+
+.mdl-meter.is-measuring rect {
+  animation: mdl-bar 1.08s linear infinite;
+}
+
+@keyframes mdl-bar {
+  0%, 100% { opacity: 0.35; }
+  11% { opacity: 1; }
+  22% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdl-meter.is-measuring rect {
+    animation: none;
+  }
+}
+
+/* Doporučená nastavení */
+.mdl-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 759px) {
+  .mdl-presets {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mdl-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.mdl-preset-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mdl-preset-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mdl-preset-desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.mdl-preset .btn,
+.mdl-in-use {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.mdl-in-use {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--sunk);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Porovnání nastavení */
+.mdl-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mdl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mdl-table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+
+.mdl-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.mdl-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mdl-table tr.is-active td:first-child {
+  box-shadow: inset 2px 0 0 var(--plum);
+}
+
+.mdl-strong {
+  font-weight: 600;
+}
+
+.mdl-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.mdl-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: 1px;
+}
+
+.mdl-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.mdl-measuring {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.mdl-row-error {
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.mdl-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 16px;
+  background: var(--sunk);
+  border-top: 1px solid var(--line);
+}
+
+.mdl-add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.mdl-add-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.mdl-notice {
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--ink-2);
+  background: var(--accent-soft);
+  border-top: 1px solid var(--line);
+}
+
+/* Technické údaje */
+.mdl-tech {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.mdl-tech h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mdl-dl {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.mdl-dl dt {
+  color: var(--ink-3);
+}
+
+.mdl-dl dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.mdl-prose {
+  margin: 0 0 8px;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.mdl-scale {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.mdl-scale-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.mdl-speed-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.mdl-raw {
+  max-height: 320px;
+  overflow: auto;
+  padding: 0;
+}
+
+.mdl-raw .mdl-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.mdl-raw .mdl-table td {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .mdl-hero {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+  }
+
+  .mdl-grade-wrap {
+    flex-direction: row;
+  }
+
+  .mdl-table-card .mdl-table thead {
+    display: none;
+  }
+
+  .mdl-table-card .mdl-table tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mdl-table-card .mdl-table td {
+    padding: 0;
+    border: none;
+  }
+
+  .mdl-table-card .mdl-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .mdl-table-card .mdl-table td.mdl-cell-name {
+    grid-column: 1 / -1;
+  }
+
+  .mdl-table-card .mdl-table tr.is-active {
+    box-shadow: inset 2px 0 0 var(--plum);
+  }
+
+  .mdl-table-card .mdl-table tr.is-active td:first-child {
+    box-shadow: none;
+  }
+
+  .mdl-dl {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .mdl-dl dd {
+    margin-bottom: 8px;
+  }
+}
+
+.mdl-strong + .mdl-speed {
+  margin-left: 8px;
+}

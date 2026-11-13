@@ -24,6 +24,7 @@ A single ripe purple plum with a dusty bloom lies on a smooth apricot-colored su
 
 ## Stav (13. 11. 2026)
 
-- Klip 1 a 3 vygenerované ve Veo (Gemini), spojené do `mluvka-video.mp4` (16 s). Klip 3 je i smyčka `svestka.mp4`.
-- Klip 2 (člověk diktuje) čeká: denní limit Veo byl vyčerpaný. Až vznikne, vlož ho mezi klip 1 a 3 (ffmpeg xfade) a přegeneruj video.
+- Všechny tři klipy hotové, spojené do `mluvka-video.mp4` (18 s, 1,4 MB): klávesa → člověk diktuje → švestka se mění ve znak. Klip 3 je zároveň smyčka `svestka.mp4`.
+- Klip 1 a 3 vznikly ve Veo přes Gemini, klip 2 přes Google Flow (flow.google.com) poté, co v Gemini došel denní limit. Flow má vlastní kvótu a účtuje kredity (30 za klip).
+- Dlouhé prompty s hex kódy ve Veo selhávají („Sorry, something went wrong"). Zkrácené bez značek a hex kódů projdou.
 - AI obrázky web nepoužívá (rozhodnutí uživatele): aplikaci ukazují skutečné screenshoty v rámečcích zařízení.

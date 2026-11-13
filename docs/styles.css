@@ -15,7 +15,7 @@
   --shadow-2:0 2px 4px rgba(51,34,58,.06), 0 12px 32px rgba(51,34,58,.12), 0 32px 64px rgba(51,34,58,.10);
   --ease:cubic-bezier(.4,0,.2,1);
   --spring:cubic-bezier(.34,1.56,.64,1);
-  --gut:20px; --plate-r:56px;
+  --gut:20px; --plate-r:40px;
   --font-d:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --font-b:"Figtree","Segoe UI",system-ui,sans-serif;
 }
@@ -89,8 +89,11 @@ main>section:not(.hero){position:relative;z-index:1}
 .plate-accent{background:var(--warm)}
 .sec+.plate,.plate+.plate{box-shadow:0 -24px 48px rgba(36,26,42,.10)}
 #presnost,#otazky,#instalace,#vyzkousej,#umi,#aplikace{border-radius:var(--plate-r) var(--plate-r) 0 0;margin-top:calc(var(--plate-r) * -1);padding-top:calc(96px + var(--plate-r))}
-@media (max-width:860px){.sec{padding:80px 0}.plate{padding:80px 0;padding-top:calc(72px + var(--plate-r))}
-  #presnost,#otazky,#instalace,#vyzkousej,#umi,#aplikace{padding-top:calc(72px + var(--plate-r));padding-bottom:80px}}
+@media (max-width:860px){.sec{padding:56px 0}.plate{padding:56px 0;padding-top:calc(40px + var(--plate-r))}
+  #presnost,#otazky,#instalace,#vyzkousej,#umi,#aplikace{padding-top:calc(40px + var(--plate-r));padding-bottom:56px}
+  .plate.tight{padding-top:calc(40px + var(--plate-r));padding-bottom:56px}
+  .final{padding:80px 0 calc(56px + var(--plate-r))}
+  .keys{margin-top:48px}}
 
 .sub{color:var(--ink-2);margin-top:16px;max-width:56ch;font-size:19px}
 .plate-dark .sub{color:var(--on-dark-2)}
@@ -237,11 +240,11 @@ kbd{font-family:var(--font-b);font-size:13px;font-weight:600;background:var(--su
 .fc-bullets li{margin-bottom:4px}
 .feat-card figcaption{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-2);font-size:15px}
 
-.fix{position:relative;padding:44px 0 0}
+.fix{position:relative;padding:52px 0 0}
 .fix-line{margin:0 0 16px;font-size:18px;line-height:1.6}
 .fix-word{border-radius:4px;padding:2px 3px;transition:background .25s var(--ease)}
 .fix-word.sel{background:rgba(255,179,122,.4)}
-.toast{position:absolute;top:0;left:0;background:var(--plum);color:#fff;border-radius:999px;padding:9px 18px;font-size:14px;box-shadow:var(--shadow-2);animation:cardin .3s var(--spring)}
+.toast{position:absolute;top:0;left:0;white-space:nowrap;background:var(--plum);color:#fff;border-radius:999px;padding:9px 18px;font-size:14px;box-shadow:var(--shadow-2);animation:cardin .3s var(--spring)}
 @media (prefers-color-scheme: dark){.toast{background:#33223A}}
 
 /* ---------- zařízení ---------- */
@@ -339,7 +342,8 @@ kbd{font-family:var(--font-b);font-size:13px;font-weight:600;background:var(--su
 
 /* ---------- mobil ---------- */
 @media (max-width:860px){
-  .nav{position:fixed;inset:76px var(--gut) auto;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-2);padding:8px 16px;margin:0;display:none}
+  .bar-end{margin-left:auto}
+  .nav{position:absolute;inset:64px 0 auto;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-2);padding:8px 16px;margin:0;display:none}
   .nav.open{display:flex}
   .nav a{padding:13px 4px;font-size:16px;border-radius:0}
   .nav a+a{border-top:1px solid var(--line)}
@@ -359,3 +363,33 @@ kbd{font-family:var(--font-b);font-size:13px;font-weight:600;background:var(--su
   .rv{opacity:1;transform:none}
   .track{animation:none}
 }
+
+#rychlost,#soukromi,#final{transform-origin:50% 0}
+main>section:not(.hero),.foot-sec{box-shadow:0 -18px 40px rgba(18,12,22,.18)}
+/* střídání tónů, ať je každý přechod mezi deskami vidět */
+#umi,#instalace{background:var(--sunk)}
+
+/* ---------- úvodní animace při načtení: vlna → logo → opona ---------- */
+.intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;cursor:pointer}
+.intro::before,.intro::after{content:"";position:absolute;left:0;right:0;height:50.5%;background:#33223A;transition:transform .85s cubic-bezier(.76,0,.24,1)}
+.intro::before{top:0;background:radial-gradient(60% 90% at 50% 100%,rgba(255,179,122,.16),transparent 70%),#33223A}
+.intro::after{bottom:0;background:radial-gradient(60% 90% at 50% 0%,rgba(255,179,122,.16),transparent 70%),#33223A}
+.intro.out::before{transform:translateY(-100%)}
+.intro.out::after{transform:translateY(100%)}
+.intro-wave{position:absolute;left:0;right:0;top:50%;z-index:1;display:flex;justify-content:center;align-items:center;gap:6px;height:min(180px,22vh);transform:translateY(-50%);
+  transition:transform .5s cubic-bezier(.7,0,.3,1),opacity .35s ease .15s}
+.intro-wave i{flex:none;width:5px;height:100%;border-radius:999px;background:#FFB37A;transform:scaleY(.06);animation:iwave .55s ease-in-out infinite alternate}
+@keyframes iwave{to{transform:scaleY(var(--h,.8))}}
+.intro.gather .intro-wave{transform:translateY(-50%) scaleX(.03);opacity:0}
+.intro-logo{position:relative;z-index:2;display:flex;align-items:center;gap:18px;opacity:0;transform:scale(.6);transition:opacity .25s ease,transform .7s cubic-bezier(.34,1.56,.64,1)}
+.intro.gather .intro-logo{opacity:1;transform:none}
+.intro-logo svg{width:104px;height:104px;flex:none;margin-right:-14px}
+.intro-logo rect{transform-box:fill-box;transform-origin:center;animation:logowave .9s ease-in-out infinite}
+@keyframes logowave{0%,100%{transform:scaleY(.6)}50%{transform:scaleY(1)}}
+.intro-logo rect:nth-child(2){animation-delay:.15s}
+.intro-logo rect:nth-child(3){animation-delay:.3s}
+.intro-logo span{font-family:var(--font-d);font-weight:800;font-size:64px;letter-spacing:-.045em;line-height:1;color:#F6EEF7;clip-path:inset(0 100% 0 0);transition:clip-path .65s cubic-bezier(.76,0,.24,1) .3s}
+.intro.gather .intro-logo span{clip-path:inset(-10% -5% -10% 0)}
+.intro.out .intro-logo{opacity:0;transform:scale(1.25);transition:opacity .35s ease,transform .6s cubic-bezier(.7,0,.3,1)}
+@media (max-width:860px){.intro-wave{gap:4px}.intro-wave i{width:4px}.intro-logo svg{width:74px;height:74px}.intro-logo span{font-size:44px}}
+@media (prefers-reduced-motion: reduce){.intro{display:none}}

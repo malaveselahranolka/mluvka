@@ -46,7 +46,64 @@
   });
 
   /* ---------- vstupní animace ---------- */
-  requestAnimationFrame(() => document.body.classList.add("loaded"));
+  // úvod jen při prvním otevření v relaci; bez úložiště se prostě ukáže znovu
+  const intro = $("intro");
+  let videno = false;
+  try { videno = sessionStorage.getItem("mluvka-intro") === "1"; sessionStorage.setItem("mluvka-intro", "1"); } catch {}
+  if (videno || reduce.matches) {
+    intro.remove();
+    requestAnimationFrame(() => document.body.classList.add("loaded"));
+  } else {
+    // vlna přes celou šířku: obálka jako věta (tišší okraje), náhodná výška a fáze
+    const wave = $("intro-wave");
+    const n = Math.min(120, Math.round(window.innerWidth / 11));
+    for (let k = 0; k < n; k++) {
+      const i = document.createElement("i");
+      const env = Math.sin((Math.PI * (k + 0.5)) / n) ** 0.6;
+      i.style.setProperty("--h", (env * (0.25 + Math.random() * 0.75)).toFixed(2));
+      i.style.animationDelay = `${(-Math.random() * 0.55).toFixed(2)}s`;
+      i.style.animationDuration = `${(0.4 + Math.random() * 0.3).toFixed(2)}s`;
+      wave.appendChild(i);
+    }
+    const timers = [];
+    const finish = () => {
+      timers.forEach(clearTimeout);
+      intro.classList.add("gather", "out");
+      document.body.classList.add("loaded");
+      setTimeout(() => intro.remove(), 900);
+    };
+    timers.push(setTimeout(() => intro.classList.add("gather"), 1000));
+    timers.push(setTimeout(() => {
+      intro.classList.add("out");
+      timers.push(setTimeout(() => document.body.classList.add("loaded"), 250));
+      timers.push(setTimeout(() => intro.remove(), 900));
+    }, 2400));
+    intro.addEventListener("click", finish, { once: true });
+    window.addEventListener("keydown", () => intro.isConnected && finish(), { once: true });
+  }
+
+  /* ---------- přechod u tří hlavních desek: vyjede jako menší karta
+     a během prvních 70 % výšky okna se roztáhne přes celou šířku ---------- */
+  const plates = Array.from(document.querySelectorAll("#rychlost, #soukromi, #final"));
+  const plateR = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--plate-r")) || 56;
+  scrollJobs.push(() => {
+    if (reduce.matches) return;
+    const vh = window.innerHeight;
+    const r = plateR();
+    for (const el of plates) {
+      const top = el.getBoundingClientRect().top; // scale od horní hrany top nemění
+      const p = 1 - (1 - clamp01((vh - top) / (vh * 0.7))) ** 2;
+      if (p === el._p) continue;
+      el._p = p;
+      if (p >= 1) {
+        el.style.transform = "";
+        el.style.borderTopLeftRadius = el.style.borderTopRightRadius = "";
+      } else {
+        el.style.transform = `scale(${(0.86 + 0.14 * p).toFixed(4)})`;
+        el.style.borderTopLeftRadius = el.style.borderTopRightRadius = `${(r * (1.8 - 0.8 * p)).toFixed(1)}px`;
+      }
+    }
+  });
 
   /* ---------- pás aplikací: zdvojit kvůli plynulé smyčce ---------- */
   const track = $("track");

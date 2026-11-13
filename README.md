@@ -1,6 +1,6 @@
 # Mluvka
 
-Soukromé diktování češtiny pro Windows. Držíš klávesu, mluvíš, pustíš a text se vloží tam, kde máš kurzor.
+Soukromé diktování češtiny pro Windows a Mac (beta). Držíš klávesu, mluvíš, pustíš a text se vloží tam, kde máš kurzor.
 Přepis dělá model **CzechSpeech** na tvé grafice (RTX 4050), zvuk nikdy neodchází z počítače.
 Text pak může uhladit **Claude Haiku 5.5** (výplňová slova, přeřeknutí, odrážky) a umí i příkazy nad označeným textem.
 To je jediná část, kde text odchází ven (k Anthropicu), a jen když nastavíš API klíč. Druhou volitelnou výjimkou je kanál (webhook).

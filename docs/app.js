@@ -507,22 +507,24 @@
   });
 
   /* ---------- kopírování příkazu ---------- */
-  const copyBtn = $("copy");
   const copyLive = $("copy-live");
-  copyBtn.addEventListener("click", async () => {
-    const txt = $("cmd-text").textContent.trim();
-    try {
-      await navigator.clipboard.writeText(txt);
-      copyBtn.textContent = "Zkopírováno";
-      copyLive.textContent = "Příkaz je ve schránce.";
-    } catch {
-      copyLive.textContent = "Kopírování se nepovedlo, označ příkaz a zkopíruj ho ručně.";
-      return;
-    }
-    setTimeout(() => {
-      copyBtn.textContent = "Zkopírovat";
-      copyLive.textContent = "";
-    }, 2000);
+  [["copy", "cmd-text"], ["copy-mac", "cmd-text-mac"]].forEach(([btnId, codeId]) => {
+    const copyBtn = $(btnId);
+    copyBtn.addEventListener("click", async () => {
+      const txt = $(codeId).textContent.trim();
+      try {
+        await navigator.clipboard.writeText(txt);
+        copyBtn.textContent = "Zkopírováno";
+        copyLive.textContent = "Příkaz je ve schránce.";
+      } catch {
+        copyLive.textContent = "Kopírování se nepovedlo, označ příkaz a zkopíruj ho ručně.";
+        return;
+      }
+      setTimeout(() => {
+        copyBtn.textContent = "Zkopírovat";
+        copyLive.textContent = "";
+      }, 2000);
+    });
   });
 
   onScroll();

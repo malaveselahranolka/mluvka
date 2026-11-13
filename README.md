@@ -15,7 +15,13 @@ Otevři PowerShell a vlož tenhle příkaz:
 irm https://raw.githubusercontent.com/malaveselahranolka/mluvka/main/instalace.ps1 | iex
 ```
 
-Co skript udělá:
+Na Macu (beta) otevři Terminál a vlož tenhle příkaz, podrobnosti jsou v sekci [macOS (beta)](#macos-beta):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/malaveselahranolka/mluvka/main/instalace.sh | bash
+```
+
+Co skript pro Windows udělá:
 
 1. Ověří Windows 64bit a PowerShell 5.1+.
 2. Najde Python 3.11+, a když chybí, nabídne instalaci přes `winget`.
